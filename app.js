@@ -3,6 +3,8 @@ import {
     getAuth, 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
+    GoogleAuthProvider,
+    signInWithPopup,
     sendPasswordResetEmail,
     onAuthStateChanged, 
     signOut
@@ -11,6 +13,7 @@ import {
     getFirestore, 
     doc, 
     setDoc, 
+    getDoc,
     collection, 
     addDoc, 
     updateDoc, 
@@ -32,6 +35,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 // =========================================================
 // 1. ANIMACIÓN DEL PANEL DESLIZANTE & MOSTRAR CONTRASEÑA
@@ -58,7 +62,7 @@ window.togglePasswordVisibility = (inputId, btn) => {
     }
 };
 
-let currentUserEmail = '';
+let currentUserDisplay = '';
 let eventsList = [];
 let unsubscribeEvents = null;
 
@@ -77,13 +81,42 @@ function showLoginAlert(message, isSuccess = false) {
     const alertBox = document.getElementById('loginAlert');
     alertBox.textContent = message;
     alertBox.className = isSuccess
-        ? 'text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 mb-3 text-left'
-        : 'text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-left';
+        ? 'text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 mb-2.5 text-left'
+        : 'text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2.5 text-left';
     alertBox.classList.remove('hidden');
 }
 
 // =========================================================
-// 2. INICIAR SESIÓN CON CORREO Y CONTRASEÑA
+// 2. INICIAR SESIÓN CON GOOGLE
+// =========================================================
+document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
+    const btnGoogle = document.getElementById('btnGoogleLogin');
+    document.getElementById('loginAlert').classList.add('hidden');
+    btnGoogle.disabled = true;
+
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+
+        const userRef = doc(db, "usuarios", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                nombre: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                creadoEn: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        showLoginAlert(traducirErrorFirebase(error.code), false);
+    } finally {
+        btnGoogle.disabled = false;
+    }
+});
+
+// =========================================================
+// 3. INICIAR SESIÓN CON CORREO Y CONTRASEÑA
 // =========================================================
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -106,7 +139,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 
 // =========================================================
-// 3. OLVIDÉ MI CONTRASEÑA
+// 4. OLVIDÉ MI CONTRASEÑA
 // =========================================================
 document.getElementById('forgotPassBtn').addEventListener('click', async () => {
     const email = document.getElementById('loginUser').value.trim();
@@ -125,7 +158,7 @@ document.getElementById('forgotPassBtn').addEventListener('click', async () => {
 });
 
 // =========================================================
-// 4. REGISTRO (SOLO CORREO Y CONTRASEÑA)
+// 5. REGISTRO (SOLO CORREO Y CONTRASEÑA)
 // =========================================================
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -154,14 +187,14 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 });
 
 // =========================================================
-// 5. DETECTOR DE SESIÓN ACTIVA
+// 6. DETECTOR DE SESIÓN ACTIVA
 // =========================================================
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        currentUserEmail = user.email;
+        currentUserDisplay = user.displayName || user.email;
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('dashboardScreen').classList.remove('hidden');
-        document.getElementById('activeUserLabel').textContent = user.email;
+        document.getElementById('activeUserLabel').textContent = currentUserDisplay;
         listenFirestoreEvents();
     } else {
         document.getElementById('dashboardScreen').classList.add('hidden');
@@ -175,7 +208,7 @@ window.logout = async () => {
 };
 
 // =========================================================
-// 6. SINCRONIZACIÓN DE EVENTOS EN FIRESTORE
+// 7. SINCRONIZACIÓN DE EVENTOS EN FIRESTORE
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
@@ -198,7 +231,7 @@ document.getElementById('newEventForm').addEventListener('submit', async (e) => 
         id: 'ELC-' + Math.floor(100 + Math.random() * 900),
         brand: document.getElementById('evBrand').value,
         store: document.getElementById('evStore').value.trim(),
-        executive: currentUserEmail,
+        executive: currentUserDisplay,
         amount: Number(document.getElementById('evAmount').value),
         step: 1,
         creadoEn: new Date().toISOString()
@@ -216,7 +249,7 @@ window.advanceStep = async (index) => {
 };
 
 // =========================================================
-// 7. RENDERIZADO DE KPIs Y TABLA
+// 8. RENDERIZADO DE KPIs Y TABLA
 // =========================================================
 window.renderApp = () => {
     const selectedBrand = document.getElementById('filterBrand').value;
@@ -272,6 +305,10 @@ function traducirErrorFirebase(code) {
             return 'Este correo ya está registrado.';
         case 'auth/weak-password':
             return 'La contraseña debe tener al menos 6 caracteres.';
+        case 'auth/popup-closed-by-user':
+            return 'Se cerró la ventana de Google antes de completar el acceso.';
+        case 'auth/unauthorized-domain':
+            return 'Dominio no autorizado. Agrégalo en Firebase Console > Authentication > Settings.';
         default:
             return 'Error de autenticación (' + code + ').';
     }
