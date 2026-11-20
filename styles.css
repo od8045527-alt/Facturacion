@@ -148,7 +148,7 @@ body {
 }
 
 /* =========================================================
-   SELECTOR SEGMENTADO DINÁMICO (GLIDING PILL)
+   SELECTOR SEGMENTADO DINÁMICO (3 PERFILES)
 ========================================================= */
 .role-segmented-wrapper {
     position: relative;
@@ -189,7 +189,7 @@ body {
     border: none;
     border-radius: 12px;
     color: #64748b;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 600;
     cursor: pointer;
     user-select: none;
@@ -237,21 +237,6 @@ body {
     from {
         opacity: 0.4;
         transform: translateY(3px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.field-reveal {
-    animation: fieldSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fieldSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-6px);
     }
     to {
         opacity: 1;
@@ -334,14 +319,24 @@ body {
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
-.btn-google:active {
-    transform: scale(0.98);
+/* Botón Portal Costco */
+.portal-brand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px 8px 8px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 18px;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-google:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
+.portal-brand-btn:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.14);
 }
 
 /* =========================================================
