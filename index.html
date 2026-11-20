@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estée Lauder Companies | Proceso Administrativo de Eventos</title>
+    <title>Estée Lauder Companies | Portal de Planeación, Tickets & Facturación</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 <body class="antialiased text-slate-800">
 
     <!-- =====================================================================
-         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO
+         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO CON 3 PERFILES
     ====================================================================== -->
     <div id="authScreen" class="auth-wrapper">
         <div class="auth-container" id="authContainer">
@@ -24,7 +24,7 @@
                         <i class="fa-solid fa-sparkles"></i> Portal Operativo ELC
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Iniciar Sesión</h1>
-                    <p class="text-xs text-slate-400 mb-3">Proceso Administrativo & Cargos AMEX</p>
+                    <p class="text-xs text-slate-400 mb-3">Planeación, Tickets & Facturación</p>
 
                     <div id="loginAlert" class="hidden text-[11px] rounded-xl px-3 py-2 mb-2.5 text-left"></div>
 
@@ -48,7 +48,6 @@
 
                     <button type="submit" id="btnLoginSubmit" class="btn-auth">Entrar al Sistema</button>
 
-                    <!-- SEPARADOR Y BOTÓN GOOGLE -->
                     <div class="relative flex py-3 items-center">
                         <div class="flex-grow border-t border-slate-200"></div>
                         <span class="flex-shrink mx-3 text-[11px] text-slate-400">o continúa con</span>
@@ -67,19 +66,23 @@
                 </form>
             </div>
 
-            <!-- FORMULARIO REGISTRO DE USUARIO -->
+            <!-- FORMULARIO REGISTRO DE USUARIO (3 PERFILES) -->
             <div class="form-box register">
                 <form id="registerForm" class="w-full max-w-xs">
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-1.5">
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
                     <h1 class="text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
-                    <p class="text-[11px] text-slate-400 mb-2">Configura tus credenciales y rol operativo</p>
+                    <p class="text-[11px] text-slate-400 mb-2">Selecciona tu perfil en el flujo</p>
 
                     <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-1.5 mb-2 text-left"></div>
 
                     <div class="input-box !my-1.5">
-                        <input type="email" id="regEmail" required placeholder="Correo electrónico (ej. nombre@elc.com)">
+                        <input type="text" id="regName" required placeholder="Tu Nombre Completo">
+                        <i class="fa-solid fa-user field-icon"></i>
+                    </div>
+                    <div class="input-box !my-1.5">
+                        <input type="email" id="regEmail" required placeholder="Correo electrónico">
                         <i class="fa-solid fa-envelope field-icon"></i>
                     </div>
                     <div class="input-box !my-1.5">
@@ -89,49 +92,30 @@
                         </button>
                     </div>
 
-                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE DINÁMICA -->
-                    <input type="hidden" id="regRole" value="EJECUTIVO">
-                    <div class="role-segmented-wrapper mt-2.5 mb-2" id="roleCardsGroup">
+                    <!-- SELECTOR SEGMENTADO DINÁMICO (3 PERFILES) -->
+                    <input type="hidden" id="regRole" value="SUPERVISOR">
+                    <div class="role-segmented-wrapper mt-2 mb-1.5" id="roleCardsGroup">
                         <div class="role-glider" id="roleGlider"></div>
-                        <button type="button" onclick="selectRoleCard('EJECUTIVO', 0, this)" class="role-seg-btn active">
-                            <i class="fa-solid fa-briefcase"></i>
+                        <button type="button" onclick="selectRoleCard('SUPERVISOR', 0, this)" class="role-seg-btn active">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <span>Supervisor</span>
+                        </button>
+                        <button type="button" onclick="selectRoleCard('EJECUTIVO', 1, this)" class="role-seg-btn">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
                             <span>Ejecutivo</span>
                         </button>
-                        <button type="button" onclick="selectRoleCard('MARCA', 1, this)" class="role-seg-btn">
-                            <i class="fa-solid fa-stamp"></i>
-                            <span>Marca</span>
-                        </button>
-                        <button type="button" onclick="selectRoleCard('ADMIN', 2, this)" class="role-seg-btn">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <span>Admin</span>
+                        <button type="button" onclick="selectRoleCard('CONTRATADO', 2, this)" class="role-seg-btn">
+                            <i class="fa-solid fa-receipt"></i>
+                            <span>Contratado</span>
                         </button>
                     </div>
 
-                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL SELECCIONADO -->
                     <div id="roleDescBanner" class="role-desc-banner mb-2">
-                        <i class="fa-solid fa-circle-info text-blue-600 mr-1.5"></i>
-                        <span id="roleDescText">Registra eventos, elabora cotizaciones, facturas y correos.</span>
+                        <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
+                        <span id="roleDescText">Sube planeación de eventos, asigna precios y programa fechas.</span>
                     </div>
 
-                    <!-- CAMPO CONDICIONAL: MARCA -->
-                    <div id="brandSelectBox" class="input-box !my-1.5 hidden field-reveal">
-                        <select id="regBrand">
-                            <option value="Estée Lauder">Marca: Estée Lauder</option>
-                            <option value="Clinique">Marca: Clinique</option>
-                            <option value="La Mer">Marca: La Mer</option>
-                            <option value="Le Labo">Marca: Le Labo</option>
-                            <option value="MAC Cosmetics">Marca: MAC Cosmetics</option>
-                        </select>
-                        <i class="fa-solid fa-tag field-icon"></i>
-                    </div>
-
-                    <!-- CAMPO CONDICIONAL: CÓDIGO ADMIN -->
-                    <div id="adminCodeBox" class="input-box !my-1.5 hidden field-reveal">
-                        <input type="password" id="regAdminCode" placeholder="Código Admin (ELC-ADMIN)">
-                        <i class="fa-solid fa-key field-icon"></i>
-                    </div>
-
-                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-2">Registrar y Entrar</button>
+                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-1">Registrar y Entrar</button>
                 </form>
             </div>
 
@@ -143,7 +127,7 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡Hola, Bienvenido!</h2>
                     <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
-                        Gestión de eventos, cotizaciones, facturación, visto bueno de marca y tabla de cargos AMEX.
+                        Plataforma conectada para Supervisor, Ejecutivo y Personal Contratado.
                     </p>
                     <button type="button" class="btn-outline-auth" id="registerToggleBtn">Registrar Cuenta</button>
                 </div>
@@ -154,7 +138,7 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡De Vuelta!</h2>
                     <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
-                        ¿Ya tienes usuario asignado? Regresa para ingresar a tu tablero operativo.
+                        ¿Ya tienes cuenta? Regresa para entrar a tu panel operativo.
                     </p>
                     <button type="button" class="btn-outline-auth" id="loginToggleBtn">Iniciar Sesión</button>
                 </div>
@@ -163,11 +147,11 @@
     </div>
 
     <!-- =====================================================================
-         SECCIÓN 2: DASHBOARD PRINCIPAL (7 PASOS PROCESO ELC)
+         SECCIÓN 2: CONTENEDOR GENERAL DEL DASHBOARD (3 PANTALLAS POR PERFIL)
     ====================================================================== -->
-    <div id="dashboardScreen" class="hidden min-h-screen bg-slate-100 pb-12 fade-in-screen">
+    <div id="dashboardScreen" class="hidden min-h-screen bg-slate-100 pb-14 fade-in-screen">
         
-        <!-- HEADER CURVO -->
+        <!-- HEADER CORPORATIVO COMPARTIDO -->
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
@@ -180,31 +164,22 @@
                             <span id="roleBadge" class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-semibold uppercase">Perfil</span>
                         </div>
                         <p class="text-xs text-blue-200">
-                            Proceso Administrativo de Eventos • 
+                            <span id="headerSubtitle">Gestión de Eventos</span> • 
                             <span id="activeUserLabel" class="font-semibold text-white">Usuario</span>
                         </p>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <div id="adminViewSwitch" class="hidden bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
-                        <i class="fa-solid fa-user-gear text-blue-300 text-xs"></i>
-                        <select id="roleSelector" onchange="renderApp()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
-                            <option value="ADMIN" class="text-slate-900">Vista: Administrador</option>
-                            <option value="EJECUTIVO" class="text-slate-900">Simular: Ejecutivo</option>
-                            <option value="MARCA" class="text-slate-900">Simular: Marca / Supervisor</option>
+                    <!-- Selector rápido de vista para pruebas o cambio de rol -->
+                    <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
+                        <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
+                        <select id="viewSwitcher" onchange="switchProfileView()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                            <option value="SUPERVISOR" class="text-slate-900">Pantalla: Supervisor</option>
+                            <option value="EJECUTIVO" class="text-slate-900">Pantalla: Ejecutivo</option>
+                            <option value="CONTRATADO" class="text-slate-900">Pantalla: Persona Contratada</option>
                         </select>
                     </div>
-
-                    <button onclick="exportCargosAmex()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs px-4 py-2.5 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2">
-                        <i class="fa-solid fa-file-excel"></i>
-                        <span>Excel Cargos AMEX</span>
-                    </button>
-
-                    <button onclick="openNewEventModal()" class="bg-white text-blue-950 hover:bg-blue-50 font-semibold text-xs px-4 py-2.5 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-blue-600"></i>
-                        <span>Registrar Evento</span>
-                    </button>
 
                     <button onclick="logout()" title="Cerrar Sesión" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-red-500/80 flex items-center justify-center transition">
                         <i class="fa-solid fa-right-from-bracket text-xs"></i>
@@ -213,81 +188,65 @@
             </div>
         </header>
 
-        <!-- TARJETAS KPI FLOTANTES -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6">
-            <section class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- =================================================================
+             PANTALLA A: SUPERVISOR (PLANEACIÓN, PRECIOS Y DESCARGA FACTURAS)
+        ================================================================== -->
+        <main id="screenSupervisor" class="hidden max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
+            <!-- KPIs Supervisor -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-slate-400">Total Eventos</span>
-                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-check"></i></span>
+                        <span class="text-xs font-medium text-slate-400">Eventos Programados</span>
+                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-days"></i></span>
                     </div>
-                    <h2 id="kpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Individuales y múltiples</p>
+                    <h2 id="supKpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Planeación activa</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-indigo-600">Cotización & Factura</span>
-                        <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                        <span class="text-xs font-medium text-amber-600">Tickets Subidos</span>
+                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
                     </div>
-                    <h2 id="kpiFacturacion" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">En Pasos 2, 3 y 4</p>
+                    <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Cargados por contratados</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-amber-600">Pendiente Vo.Bo.</span>
-                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-stamp"></i></span>
+                        <span class="text-xs font-medium text-emerald-600">Facturas Listas</span>
+                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-arrow-down"></i></span>
                     </div>
-                    <h2 id="kpiVobo" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Validación Marca (Paso 5)</p>
+                    <h2 id="supKpiInvoices" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Disponibles para descarga</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-purple-600">Listos Cargos AMEX</span>
-                        <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-brands fa-cc-amex"></i></span>
+                        <span class="text-xs font-medium text-indigo-600">Presupuesto Planeado</span>
+                        <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
                     </div>
-                    <h2 id="kpiAmex" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Pasos 6 y 7 completados</p>
-                </div>
-
-                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100 col-span-2 lg:col-span-1">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-emerald-600">Total con IVA</span>
-                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
-                    </div>
-                    <h2 id="kpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">MXN acumulado</p>
+                    <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Total con IVA MXN</p>
                 </div>
             </section>
 
-            <!-- TABLA DE EVENTOS -->
+            <!-- Barra de Acción Supervisor -->
             <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <div>
-                        <h3 id="tableTitle" class="text-base font-bold text-slate-900">Flujo Administrativo de 7 Pasos</h3>
-                        <p id="tableSubtitle" class="text-xs text-slate-400">Recepción, cotización, factura, autorización y cargos AMEX</p>
+                        <h3 class="text-base font-bold text-slate-900">Planeación de Eventos & Control de Precios</h3>
+                        <p class="text-xs text-slate-400">Programa eventos, asigna personal y descarga las facturas subidas por el Ejecutivo</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <select id="filterStep" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
-                            <option value="ALL">Todos los pasos (1-7)</option>
-                            <option value="1">1. Recepción y validación</option>
-                            <option value="2">2. Elaboración de cotización</option>
-                            <option value="3">3. Emisión de factura</option>
-                            <option value="4">4. Envío correo autorización</option>
-                            <option value="5">5. Vo.Bo. Marca / Supervisor</option>
-                            <option value="6">6. Tabla cargos AMEX</option>
-                            <option value="7">7. Revisión final y control</option>
-                        </select>
-                        <select id="filterBrand" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
-                            <option value="ALL">Todas las marcas</option>
-                            <option value="Estée Lauder">Estée Lauder</option>
-                            <option value="Clinique">Clinique</option>
-                            <option value="La Mer">La Mer</option>
-                            <option value="Le Labo">Le Labo</option>
-                            <option value="MAC Cosmetics">MAC Cosmetics</option>
-                        </select>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button onclick="exportCargosAmex()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-2xl shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Exportar Tabla AMEX</span>
+                        </button>
+                        <button onclick="openPlanModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-blue-600/25 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            <span>Programar Evento</span>
+                        </button>
                     </div>
                 </div>
 
@@ -297,39 +256,131 @@
                             <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
                                 <th class="py-3 px-3">Folio / Marca</th>
                                 <th class="py-3 px-3">Fecha / Tienda / Servicio</th>
-                                <th class="py-3 px-3">Tipo / Cant.</th>
-                                <th class="py-3 px-3">Subtotal / IVA / Total</th>
-                                <th class="py-3 px-3">Folio Cot. / Fact.</th>
-                                <th class="py-3 px-3">Etapa Actual (1-7)</th>
+                                <th class="py-3 px-3">Persona Contratada</th>
+                                <th class="py-3 px-3">Precio Planeado</th>
+                                <th class="py-3 px-3">Estado Flujo</th>
+                                <th class="py-3 px-3 text-right">Factura / Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- =================================================================
+             PANTALLA B: EJECUTIVO (VERIFICA, PORTAL COSTCO, SUBE FACTURAS Y WHATSAPP)
+        ================================================================== -->
+        <main id="screenEjecutivo" class="hidden max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
+            
+            <!-- TARJETA DE PORTALES DE FACTURACIÓN (COSTCO) -->
+            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 mb-1">
+                        <i class="fa-solid fa-link"></i> Portales de Facturación Directa
+                    </span>
+                    <h3 class="text-sm font-bold text-slate-900">Plataformas para emitir facturas con los tickets subidos</h3>
+                    <p class="text-xs text-slate-400">Abre el portal correspondiente para generar la factura y súbela al evento</p>
+                </div>
+
+                <!-- BOTÓN CON IMAGEN DE COSTCO -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="https://www3.costco.com.mx/facturacion?srsltid=AYCX9vIj9oW1nPU5yuF8kEVgwG67u_MLtSJK32p4ENMnYMxfx-CEjxJu" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="portal-brand-btn group">
+                        <div class="h-10 px-3 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden">
+                            <!-- Logo oficial Costco SVG de alta nitidez -->
+                            <svg class="h-7 w-auto" viewBox="0 0 260 72" xmlns="http://www.w3.org/2000/svg">
+                                <text x="8" y="42" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="44" fill="#E31837" letter-spacing="-1">COSTCO</text>
+                                <rect x="8" y="49" width="76" height="4.5" fill="#005DAA"/>
+                                <rect x="8" y="56" width="76" height="4.5" fill="#005DAA"/>
+                                <rect x="8" y="63" width="76" height="4.5" fill="#005DAA"/>
+                                <text x="90" y="66" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-style="italic" font-size="18.5" fill="#005DAA" letter-spacing="0.5">WHOLESALE</text>
+                            </svg>
+                        </div>
+                        <div class="text-left pr-2">
+                            <span class="block text-xs font-bold text-slate-900 group-hover:text-blue-700 transition">Facturación Costco</span>
+                            <span class="block text-[10px] text-slate-400">Abrir portal oficial <i class="fa-solid fa-arrow-up-right-from-square ml-0.5"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- TABLA DEL EJECUTIVO -->
+            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp & Carga de Facturas</h3>
+                        <p class="text-xs text-slate-400">Envía los detalles por WhatsApp al contratado, revisa su ticket y sube la factura final</p>
+                    </div>
+                    <select id="ejFilterBrand" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
+                        <option value="ALL">Todas las marcas</option>
+                        <option value="Estée Lauder">Estée Lauder</option>
+                        <option value="Clinique">Clinique</option>
+                        <option value="La Mer">La Mer</option>
+                        <option value="Le Labo">Le Labo</option>
+                        <option value="MAC Cosmetics">MAC Cosmetics</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
+                                <th class="py-3 px-3">Folio / Marca</th>
+                                <th class="py-3 px-3">Planeación Supervisor</th>
+                                <th class="py-3 px-3">Contratado & WhatsApp</th>
+                                <th class="py-3 px-3">Ticket Contratado</th>
+                                <th class="py-3 px-3">Factura Subida</th>
                                 <th class="py-3 px-3 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="eventsTableBody" class="divide-y divide-slate-100 text-xs">
-                            <!-- Dinámico -->
-                        </tbody>
+                        <tbody id="ejTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
                     </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- =================================================================
+             PANTALLA C: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE TICKETS)
+        ================================================================== -->
+        <main id="screenContratado" class="hidden max-w-5xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
+            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Mis Eventos Asignados & Carga de Tickets</h3>
+                        <p class="text-xs text-slate-400">Consulta tu evento programado y sube la foto o PDF de tus tickets para facturación</p>
+                    </div>
+                    <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
+                        <i class="fa-solid fa-camera mr-1"></i> Sube tickets claros para el Ejecutivo
+                    </span>
+                </div>
+
+                <div id="contratadoCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Tarjetas dinámicas para Persona Contratada -->
                 </div>
             </section>
         </main>
     </div>
 
     <!-- =====================================================================
-         MODAL 1: REGISTRAR EVENTO (PASO 1: RECEPCIÓN Y VALIDACIÓN)
+         MODAL SUPERVISOR: PROGRAMAR EVENTO Y PRECIOS
     ====================================================================== -->
-    <div id="newEventModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="planModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl modal-pop max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-900">1. Recepción y Validación de Evento</h3>
-                    <p class="text-[11px] text-slate-400">Completa los datos para iniciar cotización y facturación</p>
+                    <h3 class="text-lg font-bold text-slate-900">Programar Evento (Planeación)</h3>
+                    <p class="text-[11px] text-slate-400">Define tienda, fecha, precios y persona contratada</p>
                 </div>
-                <button onclick="closeNewEventModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closePlanModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="newEventForm" class="space-y-3">
+            <form id="planForm" class="space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="text-xs font-semibold text-slate-600">Marca</label>
-                        <select id="evBrand" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none">
+                        <select id="plBrand" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none">
                             <option value="Estée Lauder">Estée Lauder</option>
                             <option value="Clinique">Clinique</option>
                             <option value="La Mer">La Mer</option>
@@ -338,133 +389,125 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Fecha(s) del Evento</label>
-                        <input type="text" id="evDates" required placeholder="Ej. 21-23 Nov 2026" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                        <label class="text-xs font-semibold text-slate-600">Fecha(s) Programada(s)</label>
+                        <input type="text" id="plDates" required placeholder="Ej. 22 y 23 Nov 2026" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Tienda(s) / Punto de Venta</label>
-                        <input type="text" id="evStore" required placeholder="Ej. Palacio de Hierro Polanco" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                        <label class="text-xs font-semibold text-slate-600">Tienda / Punto de Venta</label>
+                        <input type="text" id="plStore" required placeholder="Ej. Costco Satélite / PH Polanco" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                     </div>
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Servicio Realizado</label>
-                        <input type="text" id="evService" required placeholder="Ej. Activación / Make Up Artist" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                        <label class="text-xs font-semibold text-slate-600">Servicio / Actividad</label>
+                        <input type="text" id="plService" required placeholder="Ej. Activación Fin de Semana" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Modalidad</label>
-                        <select id="evType" onchange="toggleEventCount()" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none">
-                            <option value="Evento Único">Evento Único (1)</option>
-                            <option value="Varios Eventos">Varios Eventos</option>
-                        </select>
+                        <label class="text-xs font-semibold text-slate-600">Persona Contratada (Nombre)</label>
+                        <input type="text" id="plContractorName" required placeholder="Ej. Valeria Ramírez" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                     </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">WhatsApp Contratado (10 dígitos)</label>
+                        <input type="tel" id="plContractorPhone" required placeholder="Ej. 5512345678" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="text-xs font-semibold text-slate-600">Cantidad de Eventos</label>
-                        <input type="number" id="evCount" value="1" min="1" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                        <input type="number" id="plCount" value="1" min="1" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Precio Autorizado antes IVA ($)</label>
+                        <input type="number" step="0.01" id="plSubtotal" oninput="calcPlanPreview()" required placeholder="Ej. 12500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none">
                     </div>
                 </div>
 
-                <div class="p-3.5 bg-blue-50/70 border border-blue-100 rounded-2xl space-y-2">
-                    <label class="text-xs font-semibold text-blue-950 block">Importe antes de IVA (MXN)</label>
-                    <input type="number" step="0.01" id="evSubtotal" oninput="calculateTaxPreview()" required placeholder="Ej. 15000.00" class="w-full p-2.5 bg-white border border-blue-200 rounded-xl text-xs font-semibold outline-none">
-                    <div class="flex justify-between text-[11px] text-slate-600 pt-1">
-                        <span>IVA (16%): <strong id="previewIva">$0.00</strong></span>
-                        <span>Total Final: <strong id="previewTotal" class="text-blue-700">$0.00</strong></span>
-                    </div>
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-2xl flex justify-between text-xs text-blue-950">
+                    <span>IVA (16%): <strong id="plPreviewIva">$0.00</strong></span>
+                    <span>Total Final: <strong id="plPreviewTotal" class="text-blue-700">$0.00</strong></span>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeNewEventModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Guardar Registro</button>
+                    <button type="button" onclick="closePlanModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Guardar Planeación</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- =====================================================================
-         MODAL 2: GESTIÓN DE EXPEDIENTE (PASOS 2 A 7 + CHECKLIST + CORREO)
+         MODAL EJECUTIVO: SUBIR FACTURA PARA DESCARGA DEL SUPERVISOR
     ====================================================================== -->
-    <div id="manageModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl modal-pop max-h-[92vh] overflow-y-auto">
-            <div class="flex justify-between items-start mb-4 border-b border-slate-100 pb-3">
+    <div id="invoiceModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
+            <div class="flex justify-between items-center mb-4">
                 <div>
-                    <span id="mBadge" class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">ELC-000</span>
-                    <h3 id="mTitle" class="text-lg font-bold text-slate-900 mt-1">Detalle del Expediente</h3>
-                    <p id="mSubtitle" class="text-xs text-slate-400">Tienda • Fecha • Servicio</p>
+                    <h3 class="text-lg font-bold text-slate-900">Subir Factura del Evento</h3>
+                    <p id="invModalSub" class="text-xs text-slate-400">Folio ELC-000</p>
                 </div>
-                <button onclick="closeManageModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+                <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700">Paso 2 • Folio / Ref. Cotización</label>
-                        <input type="text" id="mQuoteRef" placeholder="Ej. COT-2026-084" class="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-xs outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700">Paso 3 • Folio Factura Emitida</label>
-                        <input type="text" id="mInvoiceRef" placeholder="Ej. FAC-A-1920" class="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-xs outline-none">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="text-[11px] font-bold text-slate-700">Desglose por evento / Conceptos verificados</label>
-                        <textarea id="mBreakdown" rows="2" placeholder="Detalla el desglose de importes por evento o tienda..." class="w-full mt-1 p-2.5 bg-white border border-slate-200 rounded-xl text-xs outline-none"></textarea>
-                    </div>
+            <form id="invoiceUploadForm" class="space-y-3.5">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Folio de Factura / Cotización</label>
+                    <input type="text" id="invFolioInput" required placeholder="Ej. FAC-COSTCO-8921" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                 </div>
-
-                <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-blue-950"><i class="fa-solid fa-envelope-open-text mr-1.5 text-blue-600"></i>Paso 4 • Correo para Autorización</span>
-                        <button type="button" onclick="copyEmailTemplate()" class="text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition">
-                            <i class="fa-regular fa-copy mr-1"></i>Copiar Correo
-                        </button>
-                    </div>
-                    <textarea id="mEmailDraft" rows="4" readonly class="w-full p-2.5 bg-white border border-blue-200 rounded-xl text-[11px] text-slate-700 font-mono outline-none"></textarea>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Archivo de Factura (PDF o Imagen)</label>
+                    <input type="file" id="invFileInput" accept=".pdf,image/*" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                    <p class="text-[10px] text-slate-400 mt-1">El Supervisor podrá descargar este archivo directamente desde su tablero.</p>
                 </div>
-
-                <div class="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/70 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <span class="text-xs font-bold text-amber-950 block"><i class="fa-solid fa-stamp mr-1.5 text-amber-600"></i>Paso 5 • Visto Bueno Marca / Supervisor</span>
-                        <span id="mApprovalStatus" class="text-[11px] text-amber-800">Pendiente de confirmación</span>
-                    </div>
-                    <div id="mApprovalActions" class="flex items-center gap-2"></div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" id="btnSaveInvoice" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700">Subir Factura</button>
                 </div>
+            </form>
+        </div>
+    </div>
 
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                    <span class="text-xs font-bold text-slate-900 block mb-2.5"><i class="fa-solid fa-list-check mr-1.5 text-emerald-600"></i>Paso 7 • Revisión Final y Control (Antes de cierre AMEX)</span>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk1" class="rounded text-blue-600"> Número de eventos correcto</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk2" class="rounded text-blue-600"> Especificado si es 1 o varios eventos</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk3" class="rounded text-blue-600"> Importe individual y total correctos</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk4" class="rounded text-blue-600"> Factura coincide con cotización</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk5" class="rounded text-blue-600"> Correo indica conceptos y montos</label>
-                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk6" class="rounded text-blue-600"> Cuenta con Vo.Bo. y soporte AMEX</label>
-                    </div>
+    <!-- =====================================================================
+         MODAL CONTRATADO: SUBIR TICKET PARA EL EJECUTIVO
+    ====================================================================== -->
+    <div id="ticketModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Subir Ticket de Compra</h3>
+                    <p id="tktModalSub" class="text-xs text-slate-400">Folio ELC-000</p>
                 </div>
-
-                <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-slate-100">
-                    <button type="button" onclick="saveManageChanges(false)" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                        Guardar Cambios
-                    </button>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="closeManageModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cerrar</button>
-                        <button type="button" id="btnAdvanceModalStep" onclick="saveManageChanges(true)" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md transition">
-                            Guardar y Avanzar Etapa →
-                        </button>
-                    </div>
-                </div>
+                <button onclick="closeTicketModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <form id="ticketUploadForm" class="space-y-3.5">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Monto del Ticket ($ MXN)</label>
+                    <input type="number" step="0.01" id="tktAmountInput" required placeholder="Ej. 3450.50" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Notas / Datos del Ticket (Folio ticket, sucursal)</label>
+                    <input type="text" id="tktNotesInput" required placeholder="Ej. Ticket Costco #44120 - Insumos evento" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Foto o PDF del Ticket</label>
+                    <input type="file" id="tktFileInput" accept="image/*,.pdf" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeTicketModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" id="btnSaveTicket" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Enviar Ticket al Ejecutivo</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
         const ROLE_DESCRIPTIONS = {
-            'EJECUTIVO': 'Registra eventos, elabora cotizaciones, facturas y correos.',
-            'MARCA': 'Valida eventos de su marca, otorga Vo.Bo. y revisa AMEX.',
-            'ADMIN': 'Supervisión global, control de etapas y exportación total.'
+            'SUPERVISOR': 'Sube planeación de eventos, asigna precios y descarga facturas.',
+            'EJECUTIVO': 'Verifica planeación, manda WhatsApp y sube facturas.',
+            'CONTRATADO': 'Consulta sus eventos asignados y sube tickets de compra.'
         };
 
         function selectRoleCard(roleValue, index, clickedBtn) {
@@ -482,9 +525,6 @@
             void descBanner.offsetWidth;
             descText.textContent = ROLE_DESCRIPTIONS[roleValue];
             descBanner.classList.add('banner-pop');
-
-            document.getElementById('brandSelectBox').classList.toggle('hidden', roleValue !== 'MARCA');
-            document.getElementById('adminCodeBox').classList.toggle('hidden', roleValue !== 'ADMIN');
         }
     </script>
     <script type="module" src="app.js"></script>
