@@ -65,17 +65,23 @@ window.togglePasswordVisibility = (inputId, btn) => {
     }
 };
 
-window.handleRoleFieldVisibility = () => {
-    const selectedRole = document.getElementById('regRole').value;
-    document.getElementById('brandSelectBox').classList.toggle('hidden', selectedRole !== 'MARCA');
-    document.getElementById('adminCodeBox').classList.toggle('hidden', selectedRole !== 'ADMIN');
+window.selectRoleCard = (roleValue, clickedBtn) => {
+    document.getElementById('regRole').value = roleValue;
+
+    document.querySelectorAll('#roleCardsGroup .role-pill').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    clickedBtn.classList.add('active');
+
+    document.getElementById('brandSelectBox').classList.toggle('hidden', roleValue !== 'MARCA');
+    document.getElementById('adminCodeBox').classList.toggle('hidden', roleValue !== 'ADMIN');
 };
 
 let currentUser = {
     uid: '',
     email: '',
     display: '',
-    role: 'EJECUTIVO', // 'ADMIN', 'EJECUTIVO' o 'MARCA'
+    role: 'EJECUTIVO',
     brand: 'ALL'
 };
 let eventsList = [];
@@ -345,7 +351,6 @@ window.openManageModal = (docId) => {
     document.getElementById('mInvoiceRef').value = ev.invoiceRef || '';
     document.getElementById('mBreakdown').value = ev.breakdown || `${ev.eventCount} evento(s) en ${ev.store} - $${Number(ev.subtotal).toLocaleString('es-MX')} + IVA`;
 
-    // Generar borrador de correo (Paso 4 del documento)
     document.getElementById('mEmailDraft').value = 
 `Asunto: Solicitud de Autorización Eventos ${ev.brand} - ${ev.id} (${ev.dates})
 
@@ -364,7 +369,6 @@ Se adjunta cotización, factura y soporte documental para su autorización e int
 Saludos cordiales,
 ${ev.executive}`;
 
-    // Estado de validación de Marca / Supervisor (Paso 5)
     const approvalStatus = document.getElementById('mApprovalStatus');
     const approvalActions = document.getElementById('mApprovalActions');
     const activeRole = getActiveViewRole();
@@ -381,7 +385,6 @@ ${ev.executive}`;
             : `<span class="text-[11px] italic text-amber-700">Requiere perfil Marca / Admin para validar</span>`;
     }
 
-    // Cargar Checklist Paso 7
     const checks = ev.checklist || [false, false, false, false, false, false];
     for (let i = 1; i <= 6; i++) {
         document.getElementById(`chk${i}`).checked = Boolean(checks[i - 1]);
@@ -546,10 +549,6 @@ function getFilteredEvents() {
     const selectedStep = document.getElementById('filterStep').value;
 
     return eventsList.filter(ev => {
-        // Filtro por perfil:
-        // - ADMIN: ve todo
-        // - MARCA: ve todos los eventos de su marca asignada para validación
-        // - EJECUTIVO: ve los eventos que él registró
         if (activeRole === 'EJECUTIVO') {
             if (ev.ownerEmail !== currentUser.email && ev.executive !== currentUser.display) return false;
         } else if (activeRole === 'MARCA' && currentUser.brand !== 'ALL') {
