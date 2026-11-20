@@ -24,22 +24,22 @@
                         <i class="fa-solid fa-sparkles"></i> Portal Operativo ELC
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Iniciar Sesión</h1>
-                    <p class="text-xs text-slate-400 mb-4">Eventos Fin de Semana & Conciliación</p>
+                    <p class="text-xs text-slate-400 mb-3">Eventos Fin de Semana & Conciliación</p>
 
-                    <div id="loginAlert" class="hidden text-[11px] rounded-xl px-3 py-2 mb-3 text-left"></div>
+                    <div id="loginAlert" class="hidden text-[11px] rounded-xl px-3 py-2 mb-2.5 text-left"></div>
 
-                    <div class="input-box">
+                    <div class="input-box !my-2.5">
                         <input type="email" id="loginUser" required placeholder="Correo electrónico">
                         <i class="fa-solid fa-envelope field-icon"></i>
                     </div>
-                    <div class="input-box">
+                    <div class="input-box !my-2.5">
                         <input type="password" id="loginPass" required placeholder="Contraseña">
                         <button type="button" onclick="togglePasswordVisibility('loginPass', this)" class="toggle-pass-btn" title="Mostrar contraseña">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
 
-                    <div class="flex justify-between items-center text-[11px] text-slate-500 mb-5">
+                    <div class="flex justify-between items-center text-[11px] text-slate-500 mb-4">
                         <label class="flex items-center gap-1.5 cursor-pointer">
                             <input type="checkbox" checked class="rounded text-blue-600"> Recordarme
                         </label>
@@ -47,6 +47,23 @@
                     </div>
 
                     <button type="submit" id="btnLoginSubmit" class="btn-auth">Entrar al Sistema</button>
+
+                    <!-- SEPARADOR Y BOTÓN GOOGLE -->
+                    <div class="relative flex py-3 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-3 text-[11px] text-slate-400">o continúa con</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <button type="button" id="btnGoogleLogin" class="btn-google">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                            <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.1.74-2.51 1.18-4.22 1.18-3.24 0-5.99-2.19-6.97-5.13H1.02v3.14C3.05 21.2 7.24 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.03 14.04c-.25-.74-.39-1.54-.39-2.36 0-.82.14-1.62.39-2.36V6.18H1.02C.37 7.47 0 8.91 0 10.44s.37 2.97 1.02 4.26l4.01-3.14z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.79 0 3.41.62 4.68 1.82l3.51-3.51C18.07 1.19 15.3 0 12 0 7.24 0 3.05 2.8 1.02 6.82l4.01 3.14c.98-2.94 3.73-5.21 6.97-5.21z"/>
+                        </svg>
+                        <span>Ingresar con Google</span>
+                    </button>
                 </form>
             </div>
 
