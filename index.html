@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estée Lauder Companies | Portal de Eventos & Finanzas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="antialiased text-slate-800">
+
+    <!-- =====================================================================
+         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO CON PANEL CURVO DESLIZANTE
+    ====================================================================== -->
+    <div id="authScreen" class="auth-wrapper">
+        <div class="auth-container" id="authContainer">
+            
+            <!-- FORMULARIO LOGIN -->
+            <div class="form-box login">
+                <form id="loginForm" class="w-full max-w-xs">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-2">
+                        <i class="fa-solid fa-sparkles"></i> Portal Operativo ELC
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Iniciar Sesión</h1>
+                    <p class="text-xs text-slate-400 mb-4">Eventos Fin de Semana & Conciliación</p>
+
+                    <div id="loginAlert" class="hidden text-[11px] rounded-xl px-3 py-2 mb-3 text-left"></div>
+
+                    <div class="input-box">
+                        <input type="email" id="loginUser" required placeholder="Correo electrónico">
+                        <i class="fa-solid fa-envelope field-icon"></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" id="loginPass" required placeholder="Contraseña">
+                        <button type="button" onclick="togglePasswordVisibility('loginPass', this)" class="toggle-pass-btn" title="Mostrar contraseña">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[11px] text-slate-500 mb-5">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" checked class="rounded text-blue-600"> Recordarme
+                        </label>
+                        <button type="button" id="forgotPassBtn" class="text-blue-600 font-semibold hover:underline">¿Olvidaste tu contraseña?</button>
+                    </div>
+
+                    <button type="submit" id="btnLoginSubmit" class="btn-auth">Entrar al Sistema</button>
+                </form>
+            </div>
+
+            <!-- FORMULARIO REGISTRO DE USUARIO -->
+            <div class="form-box register">
+                <form id="registerForm" class="w-full max-w-xs">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-2">
+                        <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Crear Cuenta</h1>
+                    <p class="text-xs text-slate-400 mb-4">Registra tu correo y contraseña</p>
+
+                    <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-left"></div>
+
+                    <div class="input-box">
+                        <input type="email" id="regEmail" required placeholder="Correo electrónico">
+                        <i class="fa-solid fa-envelope field-icon"></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" id="regPass" required minlength="6" placeholder="Contraseña (mín. 6 caracteres)">
+                        <button type="button" onclick="togglePasswordVisibility('regPass', this)" class="toggle-pass-btn" title="Mostrar contraseña">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-3">Registrar y Entrar</button>
+                </form>
+            </div>
+
+            <!-- PANEL CURVO ANIMADO -->
+            <div class="toggle-box">
+                <div class="toggle-panel toggle-left">
+                    <div class="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-xl font-bold mb-4 border border-white/25 shadow-lg">
+                        ELC
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡Hola, Bienvenido!</h2>
+                    <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
+                        Control integral de 90 eventos semanales, reembolsos SPEI, facturación retailer y cargos AMEX.
+                    </p>
+                    <button type="button" class="btn-outline-auth" id="registerToggleBtn">Registrar Cuenta</button>
+                </div>
+
+                <div class="toggle-panel toggle-right">
+                    <div class="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-xl font-bold mb-4 border border-white/25 shadow-lg">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡De Vuelta!</h2>
+                    <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
+                        ¿Ya tienes usuario asignado? Regresa para ingresar a tu tablero operativo.
+                    </p>
+                    <button type="button" class="btn-outline-auth" id="loginToggleBtn">Iniciar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         SECCIÓN 2: DASHBOARD PRINCIPAL
+    ====================================================================== -->
+    <div id="dashboardScreen" class="hidden min-h-screen bg-slate-100 pb-12 fade-in-screen">
+        
+        <!-- HEADER CURVO -->
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-lg">
+                        ELC
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base sm:text-lg font-bold tracking-tight">ESTÉE LAUDER COMPANIES</h1>
+                            <span class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-medium">Semana W47</span>
+                        </div>
+                        <p class="text-xs text-blue-200">
+                            Miércoles / Jueves a Domingo • 
+                            <span id="activeUserLabel" class="font-semibold text-white">Usuario</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-blue-300 text-xs"></i>
+                        <select id="roleSelector" onchange="renderApp()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                            <option value="ADMIN" class="text-slate-900">Vista Completa (Admin)</option>
+                            <option value="EJECUTIVO" class="text-slate-900">Ejecutivo Marca (Pasos 1, 5, 6)</option>
+                            <option value="OPS" class="text-slate-900">Eddy / Mariana S. (Pasos 2, 3, 4)</option>
+                            <option value="FINANZAS" class="text-slate-900">Mariana Marín - Finanzas (Pasos 7, 8)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="openNewEventModal()" class="bg-white text-blue-950 hover:bg-blue-50 font-semibold text-xs px-4 py-2.5 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-blue-600"></i>
+                        <span>Nuevo Evento</span>
+                    </button>
+
+                    <button onclick="logout()" title="Cerrar Sesión" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-red-500/80 flex items-center justify-center transition">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- TARJETAS KPI FLOTANTES -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6">
+            <section class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-400">Eventos Activos</span>
+                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-check"></i></span>
+                    </div>
+                    <h2 id="kpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Capacidad: ~90 / fin de sem.</p>
+                </div>
+
+                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-orange-500">Reembolso SPEI</span>
+                        <span class="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xs"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                    </div>
+                    <h2 id="kpiSpei" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Eddy / Mariana S. (P2→P3)</p>
+                </div>
+
+                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-indigo-600">Facturación Retailer</span>
+                        <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                    </div>
+                    <h2 id="kpiFactura" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Ejecutivo Marca (P5→P6)</p>
+                </div>
+
+                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-purple-600">Conciliación AMEX</span>
+                        <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-brands fa-cc-amex"></i></span>
+                    </div>
+                    <h2 id="kpiAmex" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Mariana Marín (P7→P8)</p>
+                </div>
+
+                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100 col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-emerald-600">Presupuesto Activo</span>
+                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
+                    </div>
+                    <h2 id="kpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">MXN en curso</p>
+                </div>
+            </section>
+
+            <!-- TABLA DE EVENTOS -->
+            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Flujo Operativo de 8 Pasos</h3>
+                        <p class="text-xs text-slate-400">Gestión en tiempo real conectada a Firestore</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="filterBrand" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
+                            <option value="ALL">Todas las marcas</option>
+                            <option value="Estée Lauder">Estée Lauder</option>
+                            <option value="Clinique">Clinique</option>
+                            <option value="La Mer">La Mer</option>
+                            <option value="Le Labo">Le Labo</option>
+                            <option value="MAC Cosmetics">MAC Cosmetics</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
+                                <th class="py-3 px-3">ID / Marca</th>
+                                <th class="py-3 px-3">Tienda / Retailer</th>
+                                <th class="py-3 px-3">Ejecutivo</th>
+                                <th class="py-3 px-3">Monto MXN</th>
+                                <th class="py-3 px-3">Paso Actual (1-8)</th>
+                                <th class="py-3 px-3 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody" class="divide-y divide-slate-100 text-xs">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL NUEVO EVENTO -->
+    <div id="newEventModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Registrar Nuevo Evento</h3>
+                <button onclick="closeNewEventModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="newEventForm" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Marca</label>
+                    <select id="evBrand" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none">
+                        <option value="Estée Lauder">Estée Lauder</option>
+                        <option value="Clinique">Clinique</option>
+                        <option value="La Mer">La Mer</option>
+                        <option value="Le Labo">Le Labo</option>
+                        <option value="MAC Cosmetics">MAC Cosmetics</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Tienda / Punto de Venta</label>
+                    <input type="text" id="evStore" required placeholder="Ej. Palacio de Hierro Polanco" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Monto Autorizado (MXN)</label>
+                    <input type="number" id="evAmount" required placeholder="Ej. 18500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeNewEventModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Guardar Evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
