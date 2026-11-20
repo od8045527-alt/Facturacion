@@ -7,7 +7,8 @@ import {
     signInWithPopup,
     sendPasswordResetEmail,
     onAuthStateChanged, 
-    signOut
+    signOut,
+    updateProfile
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { 
     getFirestore, 
@@ -38,8 +39,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-const ADMIN_ACCESS_CODE = 'ELC-ADMIN';
-
 // =========================================================
 // 1. ANIMACIÓN DEL PANEL DESLIZANTE & CONTROLES
 // =========================================================
@@ -69,23 +68,11 @@ let currentUser = {
     uid: '',
     email: '',
     display: '',
-    role: 'EJECUTIVO',
-    brand: 'ALL'
+    role: 'SUPERVISOR' // 'SUPERVISOR', 'EJECUTIVO', 'CONTRATADO'
 };
 let eventsList = [];
 let unsubscribeEvents = null;
-let selectedEventDocId = null;
-
-// LOS 7 PASOS DE LA GUÍA DEL PROCESO ADMINISTRATIVO – EVENTOS ESTÉE LAUDER
-const STEPS_LABELS = {
-    1: '1. Recepción y validación',
-    2: '2. Elaboración de cotización',
-    3: '3. Emisión de factura',
-    4: '4. Envío correo autorización',
-    5: '5. Vo.Bo. Marca / Supervisor',
-    6: '6. Tabla de cargos AMEX',
-    7: '7. Revisión final y control'
-};
+let activeEventIdForModal = null;
 
 function showLoginAlert(message, isSuccess = false) {
     const alertBox = document.getElementById('loginAlert');
@@ -116,7 +103,6 @@ document.getElementById('btnGoogleLogin').addEventListener('click', async () => 
                 nombre: user.displayName || user.email.split('@')[0],
                 email: user.email,
                 rol: 'EJECUTIVO',
-                marca: 'ALL',
                 creadoEn: new Date().toISOString()
             });
         }
@@ -165,31 +151,24 @@ document.getElementById('forgotPassBtn').addEventListener('click', async () => {
 
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
     const selectedRole = document.getElementById('regRole').value;
-    const selectedBrand = selectedRole === 'MARCA' ? document.getElementById('regBrand').value : 'ALL';
-    const adminCode = document.getElementById('regAdminCode').value.trim();
     const alertBox = document.getElementById('regAlert');
     const btn = document.getElementById('btnRegSubmit');
 
     alertBox.classList.add('hidden');
-
-    if (selectedRole === 'ADMIN' && adminCode !== ADMIN_ACCESS_CODE) {
-        alertBox.textContent = 'Código de Administrador incorrecto. Usa ELC-ADMIN.';
-        alertBox.classList.remove('hidden');
-        return;
-    }
-
     btn.disabled = true;
     btn.textContent = 'Registrando...';
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(userCredential.user, { displayName: name });
         await setDoc(doc(db, "usuarios", userCredential.user.uid), {
+            nombre: name,
             email: email,
             rol: selectedRole,
-            marca: selectedBrand,
             creadoEn: new Date().toISOString()
         });
     } catch (error) {
@@ -203,13 +182,13 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        let userRole = 'EJECUTIVO';
-        let userBrand = 'ALL';
+        let userRole = 'SUPERVISOR';
+        let userName = user.displayName || user.email;
         try {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) {
-                userRole = userDoc.data().rol || 'EJECUTIVO';
-                userBrand = userDoc.data().marca || 'ALL';
+                userRole = userDoc.data().rol || 'SUPERVISOR';
+                userName = userDoc.data().nombre || userName;
             }
         } catch (err) {
             console.warn("Error leyendo perfil:", err);
@@ -218,36 +197,16 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = {
             uid: user.uid,
             email: user.email,
-            display: user.displayName || user.email,
-            role: userRole,
-            brand: userBrand
+            display: userName,
+            role: userRole
         };
 
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('dashboardScreen').classList.remove('hidden');
         document.getElementById('activeUserLabel').textContent = currentUser.display;
+        document.getElementById('viewSwitcher').value = currentUser.role;
 
-        const roleBadge = document.getElementById('roleBadge');
-        const adminViewSwitch = document.getElementById('adminViewSwitch');
-        const roleSelector = document.getElementById('roleSelector');
-
-        if (currentUser.role === 'ADMIN') {
-            roleBadge.textContent = 'Administrador';
-            adminViewSwitch.classList.remove('hidden');
-            roleSelector.value = 'ADMIN';
-        } else if (currentUser.role === 'MARCA') {
-            roleBadge.textContent = `Marca: ${currentUser.brand}`;
-            adminViewSwitch.classList.add('hidden');
-            roleSelector.value = 'MARCA';
-            if (currentUser.brand !== 'ALL') {
-                document.getElementById('filterBrand').value = currentUser.brand;
-            }
-        } else {
-            roleBadge.textContent = 'Ejecutivo';
-            adminViewSwitch.classList.add('hidden');
-            roleSelector.value = 'EJECUTIVO';
-        }
-
+        window.switchProfileView();
         listenFirestoreEvents();
     } else {
         document.getElementById('dashboardScreen').classList.add('hidden');
@@ -261,256 +220,319 @@ window.logout = async () => {
 };
 
 // =========================================================
-// 3. REGISTRO DE NUEVO EVENTO (PASO 1 + CÁLCULO IVA)
+// 3. CAMBIO DE PANTALLA SEGÚN PERFIL (3 PANTALLAS DISTINTAS)
 // =========================================================
-window.openNewEventModal = () => {
-    document.getElementById('newEventModal').classList.remove('hidden');
-    window.calculateTaxPreview();
-};
-window.closeNewEventModal = () => document.getElementById('newEventModal').classList.add('hidden');
+window.switchProfileView = () => {
+    const activeView = document.getElementById('viewSwitcher').value;
+    const badge = document.getElementById('roleBadge');
+    const subtitle = document.getElementById('headerSubtitle');
 
-window.toggleEventCount = () => {
-    const type = document.getElementById('evType').value;
-    const countInput = document.getElementById('evCount');
-    if (type === 'Evento Único') {
-        countInput.value = 1;
-    } else if (Number(countInput.value) < 2) {
-        countInput.value = 2;
+    document.getElementById('screenSupervisor').classList.add('hidden');
+    document.getElementById('screenEjecutivo').classList.add('hidden');
+    document.getElementById('screenContratado').classList.add('hidden');
+
+    if (activeView === 'SUPERVISOR') {
+        badge.textContent = 'Perfil: Supervisor';
+        subtitle.textContent = 'Planeación de Eventos, Precios y Descarga de Facturas';
+        document.getElementById('screenSupervisor').classList.remove('hidden');
+    } else if (activeView === 'EJECUTIVO') {
+        badge.textContent = 'Perfil: Ejecutivo';
+        subtitle.textContent = 'Verificación, WhatsApp y Facturación';
+        document.getElementById('screenEjecutivo').classList.remove('hidden');
+    } else {
+        badge.textContent = 'Perfil: Persona Contratada';
+        subtitle.textContent = 'Consulta de Eventos y Carga de Tickets';
+        document.getElementById('screenContratado').classList.remove('hidden');
     }
+
+    window.renderApp();
 };
 
-window.calculateTaxPreview = () => {
-    const subtotal = Number(document.getElementById('evSubtotal').value) || 0;
-    const iva = subtotal * 0.16;
-    const total = subtotal + iva;
-    document.getElementById('previewIva').textContent = '$' + iva.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('previewTotal').textContent = '$' + total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// =========================================================
+// 4. UTILIDAD PARA LEER Y COMPRIMIR ARCHIVOS (TICKETS / FACTURAS)
+// =========================================================
+function fileToCompressedDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) return reject('No se seleccionó archivo.');
+
+        // Si es PDF, validar que no exceda ~700KB para Firestore
+        if (file.type === 'application/pdf') {
+            if (file.size > 750 * 1024) {
+                return reject('El archivo PDF es demasiado pesado (máx. 750 KB).');
+            }
+            const reader = new FileReader();
+            reader.onload = () => resolve({ dataUrl: reader.result, fileName: file.name, fileType: file.type });
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        // Si es imagen, comprimir automáticamente a JPEG ligero para guardar rápido
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxWidth = 1000;
+                const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const compressedUrl = canvas.toDataURL('image/jpeg', 0.72);
+                resolve({ dataUrl: compressedUrl, fileName: file.name, fileType: 'image/jpeg' });
+            };
+            img.src = event.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+window.downloadStoredFile = (dataUrl, fileName) => {
+    if (!dataUrl) return;
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = fileName || 'documento_elc';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
-document.getElementById('newEventForm').addEventListener('submit', async (e) => {
+// =========================================================
+// 5. ACCIONES SUPERVISOR: PROGRAMAR EVENTO Y PRECIOS
+// =========================================================
+window.openPlanModal = () => {
+    document.getElementById('planModal').classList.remove('hidden');
+    window.calcPlanPreview();
+};
+window.closePlanModal = () => document.getElementById('planModal').classList.add('hidden');
+
+window.calcPlanPreview = () => {
+    const sub = Number(document.getElementById('plSubtotal').value) || 0;
+    const iva = sub * 0.16;
+    const tot = sub + iva;
+    document.getElementById('plPreviewIva').textContent = '$' + iva.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('plPreviewTotal').textContent = '$' + tot.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+document.getElementById('planForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const subtotal = Number(document.getElementById('evSubtotal').value) || 0;
-    const iva = Number((subtotal * 0.16).toFixed(2));
-    const total = Number((subtotal + iva).toFixed(2));
-    const count = Number(document.getElementById('evCount').value) || 1;
-    const eventType = count > 1 ? 'Varios Eventos' : 'Evento Único';
+    const sub = Number(document.getElementById('plSubtotal').value) || 0;
+    const iva = Number((sub * 0.16).toFixed(2));
+    const tot = Number((sub + iva).toFixed(2));
 
     const newEv = {
         id: 'ELC-' + Math.floor(100 + Math.random() * 900),
-        brand: document.getElementById('evBrand').value,
-        dates: document.getElementById('evDates').value.trim(),
-        store: document.getElementById('evStore').value.trim(),
-        service: document.getElementById('evService').value.trim(),
-        eventType: eventType,
-        eventCount: count,
-        subtotal: subtotal,
+        brand: document.getElementById('plBrand').value,
+        dates: document.getElementById('plDates').value.trim(),
+        store: document.getElementById('plStore').value.trim(),
+        service: document.getElementById('plService').value.trim(),
+        contractorName: document.getElementById('plContractorName').value.trim(),
+        contractorPhone: document.getElementById('plContractorPhone').value.replace(/\D/g, ''),
+        eventCount: Number(document.getElementById('plCount').value) || 1,
+        subtotal: sub,
         iva: iva,
-        total: total,
-        quoteRef: '',
-        invoiceRef: '',
-        breakdown: '',
-        approvedByBrand: false,
-        approvedByName: '',
-        checklist: [false, false, false, false, false, false],
-        executive: currentUser.display,
-        ownerEmail: currentUser.email,
-        step: 1,
+        total: tot,
+        supervisorName: currentUser.display,
+        whatsappSent: false,
+        // Datos Ticket (subidos por Contratado)
+        ticketUploaded: false,
+        ticketAmount: 0,
+        ticketNotes: '',
+        ticketFileData: '',
+        ticketFileName: '',
+        // Datos Factura (subidos por Ejecutivo para descarga del Supervisor)
+        invoiceUploaded: false,
+        invoiceFolio: '',
+        invoiceFileData: '',
+        invoiceFileName: '',
         creadoEn: new Date().toISOString()
     };
 
     await addDoc(collection(db, "eventos_elc"), newEv);
     e.target.reset();
-    window.closeNewEventModal();
+    window.closePlanModal();
 });
-
-// =========================================================
-// 4. MODAL DE GESTIÓN DE EXPEDIENTE (PASOS 2 A 7 + Vo.Bo.)
-// =========================================================
-window.openManageModal = (docId) => {
-    const ev = eventsList.find(item => item.docId === docId);
-    if (!ev) return;
-    selectedEventDocId = docId;
-
-    document.getElementById('mBadge').textContent = `${ev.id} • ${ev.brand}`;
-    document.getElementById('mTitle').textContent = `${ev.store} (${ev.eventType}: ${ev.eventCount})`;
-    document.getElementById('mSubtitle').textContent = `Fechas: ${ev.dates || 'N/D'} • Servicio: ${ev.service || 'N/D'} • Total: $${Number(ev.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-
-    document.getElementById('mQuoteRef').value = ev.quoteRef || '';
-    document.getElementById('mInvoiceRef').value = ev.invoiceRef || '';
-    document.getElementById('mBreakdown').value = ev.breakdown || `${ev.eventCount} evento(s) en ${ev.store} - $${Number(ev.subtotal).toLocaleString('es-MX')} + IVA`;
-
-    document.getElementById('mEmailDraft').value = 
-`Asunto: Solicitud de Autorización Eventos ${ev.brand} - ${ev.id} (${ev.dates})
-
-Estimado Supervisor / Gerente de Marca (${ev.brand}),
-
-Por medio del presente solicito su revisión y visto bueno para la siguiente facturación de eventos realizados:
-- Modalidad y Cantidad: ${ev.eventType} (${ev.eventCount} evento/s)
-- Tienda(s): ${ev.store}
-- Fechas y Servicio: ${ev.dates} | ${ev.service}
-- Cotización Ref.: ${ev.quoteRef || '[Pendiente]'} | Factura Ref.: ${ev.invoiceRef || '[Pendiente]'}
-- Subtotal: $${Number(ev.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-- IVA (16%): $${Number(ev.iva).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-- Total Final: $${Number(ev.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-
-Se adjunta cotización, factura y soporte documental para su autorización e integración a Cargos AMEX.
-Saludos cordiales,
-${ev.executive}`;
-
-    const approvalStatus = document.getElementById('mApprovalStatus');
-    const approvalActions = document.getElementById('mApprovalActions');
-    const activeRole = getActiveViewRole();
-
-    if (ev.approvedByBrand) {
-        approvalStatus.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i>Autorizado por ${ev.approvedByName || 'Marca/Supervisor'}</span>`;
-        approvalActions.innerHTML = (activeRole === 'ADMIN' || activeRole === 'MARCA')
-            ? `<button type="button" onclick="toggleBrandApproval(false)" class="text-[11px] px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100">Revocar Vo.Bo.</button>`
-            : '';
-    } else {
-        approvalStatus.textContent = 'Pendiente de confirmación de Marca o Supervisor';
-        approvalActions.innerHTML = (activeRole === 'ADMIN' || activeRole === 'MARCA')
-            ? `<button type="button" onclick="toggleBrandApproval(true)" class="text-[11px] font-bold px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow transition"><i class="fa-solid fa-check mr-1"></i>Dar Visto Bueno (Vo.Bo.)</button>`
-            : `<span class="text-[11px] italic text-amber-700">Requiere perfil Marca / Admin para validar</span>`;
-    }
-
-    const checks = ev.checklist || [false, false, false, false, false, false];
-    for (let i = 1; i <= 6; i++) {
-        document.getElementById(`chk${i}`).checked = Boolean(checks[i - 1]);
-    }
-
-    const advanceBtn = document.getElementById('btnAdvanceModalStep');
-    if (ev.step >= 7) {
-        advanceBtn.textContent = 'Expediente en Paso 7 (Final)';
-        advanceBtn.disabled = true;
-        advanceBtn.classList.add('opacity-50');
-    } else {
-        advanceBtn.textContent = `Guardar y Avanzar a Paso ${ev.step + 1} →`;
-        advanceBtn.disabled = false;
-        advanceBtn.classList.remove('opacity-50');
-    }
-
-    document.getElementById('manageModal').classList.remove('hidden');
-};
-
-window.closeManageModal = () => {
-    document.getElementById('manageModal').classList.add('hidden');
-    selectedEventDocId = null;
-};
-
-window.copyEmailTemplate = () => {
-    const textarea = document.getElementById('mEmailDraft');
-    textarea.select();
-    navigator.clipboard.writeText(textarea.value);
-    alert('Correo de autorización copiado al portapapeles.');
-};
-
-window.toggleBrandApproval = async (approve) => {
-    if (!selectedEventDocId) return;
-    const ev = eventsList.find(item => item.docId === selectedEventDocId);
-    const nextStep = approve && ev.step < 6 ? 6 : ev.step;
-
-    await updateDoc(doc(db, "eventos_elc", selectedEventDocId), {
-        approvedByBrand: approve,
-        approvedByName: approve ? currentUser.display : '',
-        step: nextStep
-    });
-    window.openManageModal(selectedEventDocId);
-};
-
-window.saveManageChanges = async (advanceStep) => {
-    if (!selectedEventDocId) return;
-    const ev = eventsList.find(item => item.docId === selectedEventDocId);
-    if (!ev) return;
-
-    const checklist = [];
-    for (let i = 1; i <= 6; i++) {
-        checklist.push(document.getElementById(`chk${i}`).checked);
-    }
-
-    let nextStep = ev.step;
-    if (advanceStep && ev.step < 7) {
-        nextStep = ev.step + 1;
-    }
-
-    await updateDoc(doc(db, "eventos_elc", selectedEventDocId), {
-        quoteRef: document.getElementById('mQuoteRef').value.trim(),
-        invoiceRef: document.getElementById('mInvoiceRef').value.trim(),
-        breakdown: document.getElementById('mBreakdown').value.trim(),
-        checklist: checklist,
-        step: nextStep
-    });
-
-    window.closeManageModal();
-};
 
 window.deleteEvent = async (docId, eventCode) => {
     if (!docId) return;
-    if (confirm(`¿Eliminar definitivamente el registro ${eventCode}?`)) {
+    if (confirm(`¿Eliminar el evento ${eventCode}?`)) {
         await deleteDoc(doc(db, "eventos_elc", docId));
     }
 };
 
 // =========================================================
-// 5. EXPORTACIÓN TABLA DE CARGOS AMEX (PASO 6 DEL DOCUMENTO)
+// 6. ACCIONES EJECUTIVO: WHATSAPP Y SUBIR FACTURA
+// =========================================================
+window.sendWhatsAppToContractor = async (docId) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+
+    const cleanPhone = (ev.contractorPhone || '').replace(/\D/g, '');
+    const fullPhone = cleanPhone.length === 10 ? `52${cleanPhone}` : cleanPhone;
+
+    const message = 
+`¡Hola ${ev.contractorName}! Te comparto la planeación confirmada para tu evento de *${ev.brand}*:
+
+• *Folio:* ${ev.id}
+• *Fecha(s):* ${ev.dates}
+• *Tienda:* ${ev.store}
+• *Actividad:* ${ev.service}
+• *Cantidad:* ${ev.eventCount} evento(s)
+• *Presupuesto Autorizado:* $${Number(ev.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN (IVA incluido)
+
+Por favor ingresa al portal para confirmar y subir tus tickets de compra en cuanto los tengas para poder generar la factura. ¡Gracias!`;
+
+    if (docId) {
+        await updateDoc(doc(db, "eventos_elc", docId), { whatsappSent: true });
+    }
+
+    const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+};
+
+window.openInvoiceModal = (docId) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+    activeEventIdForModal = docId;
+    document.getElementById('invModalSub').textContent = `${ev.id} • ${ev.brand} • ${ev.store}`;
+    document.getElementById('invFolioInput').value = ev.invoiceFolio || '';
+    document.getElementById('invoiceModal').classList.remove('hidden');
+};
+window.closeInvoiceModal = () => {
+    document.getElementById('invoiceModal').classList.add('hidden');
+    activeEventIdForModal = null;
+};
+
+document.getElementById('invoiceUploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!activeEventIdForModal) return;
+    const file = document.getElementById('invFileInput').files[0];
+    const folio = document.getElementById('invFolioInput').value.trim();
+    const btn = document.getElementById('btnSaveInvoice');
+
+    btn.disabled = true;
+    btn.textContent = 'Subiendo factura...';
+
+    try {
+        const processed = await fileToCompressedDataUrl(file);
+        await updateDoc(doc(db, "eventos_elc", activeEventIdForModal), {
+            invoiceUploaded: true,
+            invoiceFolio: folio,
+            invoiceFileData: processed.dataUrl,
+            invoiceFileName: `Factura_${folio}_${processed.fileName}`
+        });
+        e.target.reset();
+        window.closeInvoiceModal();
+    } catch (err) {
+        alert('Error al subir factura: ' + err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Subir Factura';
+    }
+});
+
+// =========================================================
+// 7. ACCIONES PERSONA CONTRATADA: SUBIR TICKETS
+// =========================================================
+window.openTicketModal = (docId) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+    activeEventIdForModal = docId;
+    document.getElementById('tktModalSub').textContent = `${ev.id} • ${ev.brand} • ${ev.store}`;
+    document.getElementById('tktAmountInput').value = ev.ticketAmount || '';
+    document.getElementById('tktNotesInput').value = ev.ticketNotes || '';
+    document.getElementById('ticketModal').classList.remove('hidden');
+};
+window.closeTicketModal = () => {
+    document.getElementById('ticketModal').classList.add('hidden');
+    activeEventIdForModal = null;
+};
+
+document.getElementById('ticketUploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!activeEventIdForModal) return;
+    const file = document.getElementById('tktFileInput').files[0];
+    const amount = Number(document.getElementById('tktAmountInput').value) || 0;
+    const notes = document.getElementById('tktNotesInput').value.trim();
+    const btn = document.getElementById('btnSaveTicket');
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando ticket...';
+
+    try {
+        const processed = await fileToCompressedDataUrl(file);
+        await updateDoc(doc(db, "eventos_elc", activeEventIdForModal), {
+            ticketUploaded: true,
+            ticketAmount: amount,
+            ticketNotes: notes,
+            ticketFileData: processed.dataUrl,
+            ticketFileName: `Ticket_${processed.fileName}`
+        });
+        e.target.reset();
+        window.closeTicketModal();
+    } catch (err) {
+        alert('Error al subir ticket: ' + err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Ticket al Ejecutivo';
+    }
+});
+
+// =========================================================
+// 8. EXPORTACIÓN EXCEL CARGOS AMEX (SUPERVISOR)
 // =========================================================
 window.exportCargosAmex = () => {
-    const filtered = getFilteredEvents();
-    if (filtered.length === 0) {
-        alert('No hay eventos visibles en el filtro actual para generar la tabla de Cargos AMEX.');
+    if (eventsList.length === 0) {
+        alert('No hay eventos registrados para exportar.');
         return;
     }
 
     const headers = [
         'Folio',
-        'Gerente_Marca',
-        'Fechas_Evento',
+        'Marca',
+        'Fechas',
         'Tienda',
         'Servicio',
-        'Modalidad',
+        'Persona_Contratada',
         'Cantidad_Eventos',
-        'Cotizacion_Ref',
-        'Factura_Ref',
-        'Subtotal_Antes_IVA',
+        'Subtotal_Planeado',
         'IVA_16',
-        'Total_Cargo_AMEX',
-        'VoBo_Autorizado',
-        'Autorizado_Por',
-        'Ejecutivo_Responsable',
-        'Etapa_Proceso'
+        'Total_Planeado',
+        'Monto_Ticket_Subido',
+        'Folio_Factura',
+        'Factura_Lista'
     ];
 
-    const rows = filtered.map(ev => [
+    const rows = eventsList.map(ev => [
         ev.id,
         ev.brand,
         `"${(ev.dates || '').replace(/"/g, '""')}"`,
         `"${(ev.store || '').replace(/"/g, '""')}"`,
         `"${(ev.service || '').replace(/"/g, '""')}"`,
-        ev.eventType || 'Evento Único',
+        `"${(ev.contractorName || '').replace(/"/g, '""')}"`,
         ev.eventCount || 1,
-        ev.quoteRef || 'Pendiente',
-        ev.invoiceRef || 'Pendiente',
         Number(ev.subtotal || 0).toFixed(2),
         Number(ev.iva || 0).toFixed(2),
         Number(ev.total || 0).toFixed(2),
-        ev.approvedByBrand ? 'SI' : 'PENDIENTE',
-        `"${(ev.approvedByName || '').replace(/"/g, '""')}"`,
-        `"${(ev.executive || '').replace(/"/g, '""')}"`,
-        `"${STEPS_LABELS[ev.step] || ''}"`
+        Number(ev.ticketAmount || 0).toFixed(2),
+        ev.invoiceFolio || 'Pendiente',
+        ev.invoiceUploaded ? 'SI' : 'NO'
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const brandTag = document.getElementById('filterBrand').value.replace(/\s+/g, '_');
     link.href = url;
-    link.download = `Cargos_AMEX_${brandTag}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `Cargos_AMEX_ELC_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
 };
 
 // =========================================================
-// 6. SINCRONIZACIÓN FIRESTORE Y RENDERIZADO
+// 9. SINCRONIZACIÓN FIRESTORE Y RENDERIZADO DE LAS 3 PANTALLAS
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
@@ -524,105 +546,169 @@ function listenFirestoreEvents() {
     });
 }
 
-function getActiveViewRole() {
-    if (currentUser.role === 'ADMIN') {
-        return document.getElementById('roleSelector').value;
-    }
-    return currentUser.role;
-}
-
-function getFilteredEvents() {
-    const activeRole = getActiveViewRole();
-    const selectedBrand = document.getElementById('filterBrand').value;
-    const selectedStep = document.getElementById('filterStep').value;
-
-    return eventsList.filter(ev => {
-        if (activeRole === 'EJECUTIVO') {
-            if (ev.ownerEmail !== currentUser.email && ev.executive !== currentUser.display) return false;
-        } else if (activeRole === 'MARCA' && currentUser.brand !== 'ALL') {
-            if (ev.brand !== currentUser.brand) return false;
-        }
-
-        if (selectedBrand !== 'ALL' && ev.brand !== selectedBrand) return false;
-        if (selectedStep !== 'ALL' && String(ev.step) !== selectedStep) return false;
-        return true;
-    });
-}
-
 window.renderApp = () => {
-    const activeRole = getActiveViewRole();
-    const filtered = getFilteredEvents();
+    renderSupervisorView();
+    renderEjecutivoView();
+    renderContratadoView();
+};
 
-    document.getElementById('tableTitle').textContent =
-        activeRole === 'ADMIN' ? 'Control Global del Proceso ELC (Administrador)' :
-        activeRole === 'MARCA' ? `Validación de Marca (${currentUser.brand !== 'ALL' ? currentUser.brand : 'Todas'})` :
-        'Mis Eventos Registrados (Ejecutivo)';
+// RENDER 1: PANTALLA SUPERVISOR
+function renderSupervisorView() {
+    document.getElementById('supKpiTotal').textContent = eventsList.length;
+    document.getElementById('supKpiTickets').textContent = eventsList.filter(e => e.ticketUploaded).length;
+    document.getElementById('supKpiInvoices').textContent = eventsList.filter(e => e.invoiceUploaded).length;
 
-    document.getElementById('kpiTotal').textContent = filtered.reduce((acc, e) => acc + (Number(e.eventCount) || 1), 0);
-    document.getElementById('kpiFacturacion').textContent = filtered.filter(e => [2, 3, 4].includes(e.step)).length;
-    document.getElementById('kpiVobo').textContent = filtered.filter(e => !e.approvedByBrand).length;
-    document.getElementById('kpiAmex').textContent = filtered.filter(e => e.step >= 6).length;
+    const totalBudget = eventsList.reduce((acc, e) => acc + (Number(e.total) || 0), 0);
+    document.getElementById('supKpiBudget').textContent = '$' + totalBudget.toLocaleString('es-MX', { minimumFractionDigits: 2 });
 
-    const totalWithTax = filtered.reduce((acc, e) => acc + (Number(e.total) || Number(e.amount) || 0), 0);
-    document.getElementById('kpiBudget').textContent = '$' + totalWithTax.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    const tbody = document.getElementById('eventsTableBody');
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">No hay eventos registrados en esta vista. Haz clic en <b>Registrar Evento</b> para iniciar.</td></tr>`;
+    const tbody = document.getElementById('supTableBody');
+    if (eventsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">No hay eventos programados. Haz clic en <b>Programar Evento</b> para subir tu planeación.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = filtered.map((ev) => {
-        const sub = Number(ev.subtotal || ev.amount || 0);
-        const iva = Number(ev.iva || sub * 0.16);
-        const tot = Number(ev.total || sub + iva);
+    tbody.innerHTML = eventsList.map(ev => {
+        const statusBadges = `
+            <div class="flex flex-col gap-1">
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ev.ticketUploaded ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}">
+                    <i class="fa-solid ${ev.ticketUploaded ? 'fa-check' : 'fa-clock'}"></i> ${ev.ticketUploaded ? 'Ticket Subido' : 'Sin Ticket'}
+                </span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ev.invoiceUploaded ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                    <i class="fa-solid ${ev.invoiceUploaded ? 'fa-file-circle-check' : 'fa-hourglass-half'}"></i> ${ev.invoiceUploaded ? 'Factura Lista' : 'Factura Pendiente'}
+                </span>
+            </div>
+        `;
 
-        const voboBadge = ev.approvedByBrand
-            ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1"><i class="fa-solid fa-check-circle"></i> Vo.Bo. OK</span>`
-            : `<span class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full mt-1"><i class="fa-solid fa-clock"></i> Sin Vo.Bo.</span>`;
-
-        const deleteBtn = activeRole === 'ADMIN'
-            ? `<button onclick="deleteEvent('${ev.docId}', '${ev.id}')" title="Eliminar" class="ml-1.5 w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition"><i class="fa-solid fa-trash-can text-xs"></i></button>`
-            : '';
+        const downloadInvoiceBtn = ev.invoiceUploaded
+            ? `<button onclick="downloadStoredFile('${ev.invoiceFileData}', '${ev.invoiceFileName}')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-download"></i> Descargar Factura
+               </button>`
+            : `<span class="text-[11px] text-slate-400 italic">Esperando Ejecutivo</span>`;
 
         return `
             <tr class="hover:bg-slate-50 transition">
                 <td class="py-3.5 px-3">
                     <span class="font-bold text-slate-900 block">${ev.id}</span>
                     <span class="text-[11px] text-blue-600 font-semibold">${ev.brand}</span>
-                    <span class="block text-[10px] text-slate-400 mt-0.5">${ev.executive || ''}</span>
                 </td>
                 <td class="py-3.5 px-3">
                     <span class="font-semibold text-slate-800 block">${ev.store}</span>
-                    <span class="text-[11px] text-slate-500">${ev.dates || 'Sin fecha'} • ${ev.service || 'Evento'}</span>
+                    <span class="text-[11px] text-slate-500">${ev.dates} • ${ev.service}</span>
                 </td>
                 <td class="py-3.5 px-3">
-                    <span class="font-semibold text-slate-700 block">${ev.eventType || 'Evento Único'}</span>
-                    <span class="text-[11px] text-slate-400">${ev.eventCount || 1} evento(s)</span>
+                    <span class="font-medium text-slate-800 block">${ev.contractorName || 'Sin asignar'}</span>
+                    <span class="text-[11px] text-slate-400">${ev.contractorPhone || ''}</span>
                 </td>
                 <td class="py-3.5 px-3">
-                    <span class="font-bold text-slate-900 block">$${tot.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                    <span class="text-[10px] text-slate-400">Sub: $${sub.toLocaleString('es-MX')} + IVA: $${iva.toLocaleString('es-MX')}</span>
+                    <span class="font-bold text-slate-900 block">$${Number(ev.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                    <span class="text-[10px] text-slate-400">Sub: $${Number(ev.subtotal).toLocaleString('es-MX')}</span>
                 </td>
-                <td class="py-3.5 px-3 text-[11px]">
-                    <span class="block text-slate-600">Cot: <b>${ev.quoteRef || '—'}</b></span>
-                    <span class="block text-slate-600">Fac: <b>${ev.invoiceRef || '—'}</b></span>
-                </td>
-                <td class="py-3.5 px-3">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
-                        ${STEPS_LABELS[ev.step] || 'Paso ' + ev.step}
-                    </span>
-                    <div>${voboBadge}</div>
-                </td>
+                <td class="py-3.5 px-3">${statusBadges}</td>
                 <td class="py-3.5 px-3 text-right whitespace-nowrap">
-                    <button onclick="openManageModal('${ev.docId}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-[11px] font-semibold transition">
-                        <i class="fa-solid fa-folder-open mr-1"></i>Gestionar
-                    </button>${deleteBtn}
+                    ${downloadInvoiceBtn}
+                    <button onclick="deleteEvent('${ev.docId}', '${ev.id}')" title="Eliminar" class="ml-1.5 w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 </td>
             </tr>
         `;
     }).join('');
-};
+}
+
+// RENDER 2: PANTALLA EJECUTIVO
+function renderEjecutivoView() {
+    const brandFilter = document.getElementById('ejFilterBrand').value;
+    const filtered = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
+    const tbody = document.getElementById('ejTableBody');
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">No hay planeaciones cargadas por el Supervisor aún.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(ev => {
+        const ticketCol = ev.ticketUploaded
+            ? `<div class="space-y-1">
+                <span class="text-[11px] font-bold text-blue-700 block">$${Number(ev.ticketAmount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                <span class="text-[10px] text-slate-500 block">${ev.ticketNotes || 'Ticket cargado'}</span>
+                <button onclick="downloadStoredFile('${ev.ticketFileData}', '${ev.ticketFileName}')" class="text-[10px] font-semibold text-blue-600 hover:underline">
+                    <i class="fa-solid fa-eye mr-0.5"></i>Ver / Descargar Ticket
+                </button>
+               </div>`
+            : `<span class="text-[11px] text-slate-400 italic">Aún no sube ticket</span>`;
+
+        const invoiceCol = ev.invoiceUploaded
+            ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                <i class="fa-solid fa-circle-check"></i> ${ev.invoiceFolio || 'Subida'}
+               </span>`
+            : `<span class="text-[11px] text-amber-600 font-medium">Pendiente de subir</span>`;
+
+        return `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="py-3.5 px-3">
+                    <span class="font-bold text-slate-900 block">${ev.id}</span>
+                    <span class="text-[11px] text-blue-600 font-semibold">${ev.brand}</span>
+                </td>
+                <td class="py-3.5 px-3">
+                    <span class="font-semibold text-slate-800 block">${ev.store} (${ev.dates})</span>
+                    <span class="text-[11px] text-slate-500">${ev.service} • Aut: <b>$${Number(ev.total).toLocaleString('es-MX')}</b></span>
+                </td>
+                <td class="py-3.5 px-3">
+                    <span class="font-semibold text-slate-800 block">${ev.contractorName}</span>
+                    <button onclick="sendWhatsAppToContractor('${ev.docId}')" class="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10.5px] font-semibold transition">
+                        <i class="fa-brands fa-whatsapp text-xs"></i> ${ev.whatsappSent ? 'Reenviar WhatsApp' : 'Enviar WhatsApp'}
+                    </button>
+                </td>
+                <td class="py-3.5 px-3">${ticketCol}</td>
+                <td class="py-3.5 px-3">${invoiceCol}</td>
+                <td class="py-3.5 px-3 text-right whitespace-nowrap">
+                    <button onclick="openInvoiceModal('${ev.docId}')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-[11px] font-semibold transition">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i>${ev.invoiceUploaded ? 'Actualizar Factura' : 'Subir Factura'}
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// RENDER 3: PANTALLA PERSONA CONTRATADA
+function renderContratadoView() {
+    const grid = document.getElementById('contratadoCardsGrid');
+    if (eventsList.length === 0) {
+        grid.innerHTML = `<div class="col-span-2 py-10 text-center text-xs text-slate-400">No tienes eventos asignados por el momento.</div>`;
+        return;
+    }
+
+    grid.innerHTML = eventsList.map(ev => `
+        <div class="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-md transition flex flex-col justify-between gap-4">
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${ev.id} • ${ev.brand}</span>
+                    <span class="text-[11px] font-semibold ${ev.ticketUploaded ? 'text-emerald-600' : 'text-amber-600'}">
+                        <i class="fa-solid ${ev.ticketUploaded ? 'fa-circle-check' : 'fa-clock'} mr-1"></i>
+                        ${ev.ticketUploaded ? 'Ticket enviado' : 'Pendiente de ticket'}
+                    </span>
+                </div>
+                <h4 class="text-base font-bold text-slate-900">${ev.store}</h4>
+                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-calendar mr-1 text-blue-600"></i>${ev.dates} • ${ev.service}</p>
+                <div class="mt-3 p-3 rounded-xl bg-white border border-slate-100 text-xs flex justify-between items-center">
+                    <span class="text-slate-500">Presupuesto asignado:</span>
+                    <span class="font-bold text-slate-900">$${Number(ev.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
+                </div>
+                ${ev.ticketUploaded ? `
+                    <div class="mt-2 text-[11px] text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
+                        <b>Ticket registrado:</b> $${Number(ev.ticketAmount).toLocaleString('es-MX')} — ${ev.ticketNotes}
+                    </div>
+                ` : ''}
+            </div>
+
+            <button onclick="openTicketModal('${ev.docId}')" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-camera"></i>
+                <span>${ev.ticketUploaded ? 'Subir / Reemplazar Ticket' : 'Subir Foto o PDF de Ticket'}</span>
+            </button>
+        </div>
+    `).join('');
+}
 
 function traducirErrorFirebase(code) {
     switch (code) {
