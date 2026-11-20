@@ -73,13 +73,13 @@
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-1.5">
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
-                    <h1 class="text-2xl font-bold text-slate-900 mb-1">Crear Cuenta</h1>
-                    <p class="text-xs text-slate-400 mb-2.5">Selecciona tu perfil operativo</p>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
+                    <p class="text-[11px] text-slate-400 mb-2.5">Configura tus credenciales y rol operativo</p>
 
-                    <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2 text-left"></div>
+                    <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-1.5 mb-2 text-left"></div>
 
                     <div class="input-box !my-1.5">
-                        <input type="email" id="regEmail" required placeholder="Correo electrónico">
+                        <input type="email" id="regEmail" required placeholder="Correo electrónico (ej. nombre@elc.com)">
                         <i class="fa-solid fa-envelope field-icon"></i>
                     </div>
                     <div class="input-box !my-1.5">
@@ -88,14 +88,31 @@
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
-                    <div class="input-box !my-1.5">
-                        <select id="regRole" onchange="handleRoleFieldVisibility()">
-                            <option value="EJECUTIVO">Perfil: Ejecutivo</option>
-                            <option value="MARCA">Perfil: Marca / Supervisor (Validación)</option>
-                            <option value="ADMIN">Perfil: Administrador General</option>
-                        </select>
-                        <i class="fa-solid fa-id-badge field-icon"></i>
+
+                    <!-- SELECTOR VISUAL DE PERFIL (TARJETAS) -->
+                    <input type="hidden" id="regRole" value="EJECUTIVO">
+                    <div class="text-left mt-2 mb-1">
+                        <span class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider">Perfil Operativo</span>
                     </div>
+                    <div class="grid grid-cols-3 gap-1.5 mb-2" id="roleCardsGroup">
+                        <button type="button" onclick="selectRoleCard('EJECUTIVO', this)" class="role-pill active">
+                            <i class="fa-solid fa-briefcase text-xs mb-1"></i>
+                            <span class="text-[11px] font-bold leading-tight">Ejecutivo</span>
+                            <span class="text-[9px] opacity-75">Cotiza / Factura</span>
+                        </button>
+                        <button type="button" onclick="selectRoleCard('MARCA', this)" class="role-pill">
+                            <i class="fa-solid fa-stamp text-xs mb-1"></i>
+                            <span class="text-[11px] font-bold leading-tight">Marca</span>
+                            <span class="text-[9px] opacity-75">Vo.Bo. / AMEX</span>
+                        </button>
+                        <button type="button" onclick="selectRoleCard('ADMIN', this)" class="role-pill">
+                            <i class="fa-solid fa-shield-halved text-xs mb-1"></i>
+                            <span class="text-[11px] font-bold leading-tight">Admin</span>
+                            <span class="text-[9px] opacity-75">Control Total</span>
+                        </button>
+                    </div>
+
+                    <!-- CAMPO CONDICIONAL: MARCA -->
                     <div id="brandSelectBox" class="input-box !my-1.5 hidden">
                         <select id="regBrand">
                             <option value="Estée Lauder">Marca: Estée Lauder</option>
@@ -106,6 +123,8 @@
                         </select>
                         <i class="fa-solid fa-tag field-icon"></i>
                     </div>
+
+                    <!-- CAMPO CONDICIONAL: CÓDIGO ADMIN -->
                     <div id="adminCodeBox" class="input-box !my-1.5 hidden">
                         <input type="password" id="regAdminCode" placeholder="Código Admin (ELC-ADMIN)">
                         <i class="fa-solid fa-key field-icon"></i>
@@ -295,7 +314,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 1: REGISTRAR / EDITAR EVENTO (PASO 1: RECEPCIÓN Y VALIDACIÓN)
+         MODAL 1: REGISTRAR EVENTO (PASO 1: RECEPCIÓN Y VALIDACIÓN)
     ====================================================================== -->
     <div id="newEventModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl modal-pop max-h-[92vh] overflow-y-auto">
@@ -415,11 +434,11 @@
                         <span id="mApprovalStatus" class="text-[11px] text-amber-800">Pendiente de confirmación</span>
                     </div>
                     <div id="mApprovalActions" class="flex items-center gap-2">
-                        <!-- Se llena según el perfil -->
+                        <!-- Dinámico -->
                     </div>
                 </div>
 
-                <!-- PASO 7: REVISIÓN FINAL Y CONTROL (CHECKLIST DEL DOCUMENTO) -->
+                <!-- PASO 7: REVISIÓN FINAL Y CONTROL -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                     <span class="text-xs font-bold text-slate-900 block mb-2.5"><i class="fa-solid fa-list-check mr-1.5 text-emerald-600"></i>Paso 7 • Revisión Final y Control (Antes de cierre AMEX)</span>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
