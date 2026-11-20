@@ -74,7 +74,7 @@
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
                     <h1 class="text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
-                    <p class="text-[11px] text-slate-400 mb-2.5">Configura tus credenciales y rol operativo</p>
+                    <p class="text-[11px] text-slate-400 mb-2">Configura tus credenciales y rol operativo</p>
 
                     <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-1.5 mb-2 text-left"></div>
 
@@ -89,31 +89,32 @@
                         </button>
                     </div>
 
-                    <!-- SELECTOR VISUAL DE PERFIL (TARJETAS) -->
+                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE DINÁMICA -->
                     <input type="hidden" id="regRole" value="EJECUTIVO">
-                    <div class="text-left mt-2 mb-1">
-                        <span class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider">Perfil Operativo</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-1.5 mb-2" id="roleCardsGroup">
-                        <button type="button" onclick="selectRoleCard('EJECUTIVO', this)" class="role-pill active">
-                            <i class="fa-solid fa-briefcase text-xs mb-1"></i>
-                            <span class="text-[11px] font-bold leading-tight">Ejecutivo</span>
-                            <span class="text-[9px] opacity-75">Cotiza / Factura</span>
+                    <div class="role-segmented-wrapper mt-2.5 mb-2" id="roleCardsGroup">
+                        <div class="role-glider" id="roleGlider"></div>
+                        <button type="button" onclick="selectRoleCard('EJECUTIVO', 0, this)" class="role-seg-btn active">
+                            <i class="fa-solid fa-briefcase"></i>
+                            <span>Ejecutivo</span>
                         </button>
-                        <button type="button" onclick="selectRoleCard('MARCA', this)" class="role-pill">
-                            <i class="fa-solid fa-stamp text-xs mb-1"></i>
-                            <span class="text-[11px] font-bold leading-tight">Marca</span>
-                            <span class="text-[9px] opacity-75">Vo.Bo. / AMEX</span>
+                        <button type="button" onclick="selectRoleCard('MARCA', 1, this)" class="role-seg-btn">
+                            <i class="fa-solid fa-stamp"></i>
+                            <span>Marca</span>
                         </button>
-                        <button type="button" onclick="selectRoleCard('ADMIN', this)" class="role-pill">
-                            <i class="fa-solid fa-shield-halved text-xs mb-1"></i>
-                            <span class="text-[11px] font-bold leading-tight">Admin</span>
-                            <span class="text-[9px] opacity-75">Control Total</span>
+                        <button type="button" onclick="selectRoleCard('ADMIN', 2, this)" class="role-seg-btn">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Admin</span>
                         </button>
                     </div>
 
+                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL SELECCIONADO -->
+                    <div id="roleDescBanner" class="role-desc-banner mb-2">
+                        <i class="fa-solid fa-circle-info text-blue-600 mr-1.5"></i>
+                        <span id="roleDescText">Registra eventos, elabora cotizaciones, facturas y correos.</span>
+                    </div>
+
                     <!-- CAMPO CONDICIONAL: MARCA -->
-                    <div id="brandSelectBox" class="input-box !my-1.5 hidden">
+                    <div id="brandSelectBox" class="input-box !my-1.5 hidden field-reveal">
                         <select id="regBrand">
                             <option value="Estée Lauder">Marca: Estée Lauder</option>
                             <option value="Clinique">Marca: Clinique</option>
@@ -125,7 +126,7 @@
                     </div>
 
                     <!-- CAMPO CONDICIONAL: CÓDIGO ADMIN -->
-                    <div id="adminCodeBox" class="input-box !my-1.5 hidden">
+                    <div id="adminCodeBox" class="input-box !my-1.5 hidden field-reveal">
                         <input type="password" id="regAdminCode" placeholder="Código Admin (ELC-ADMIN)">
                         <i class="fa-solid fa-key field-icon"></i>
                     </div>
@@ -186,7 +187,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <!-- Selector de vista para Administrador -->
                     <div id="adminViewSwitch" class="hidden bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-user-gear text-blue-300 text-xs"></i>
                         <select id="roleSelector" onchange="renderApp()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
@@ -400,7 +400,6 @@
             </div>
 
             <div class="space-y-4">
-                <!-- PASOS 2 Y 3: COTIZACIÓN Y FACTURA -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <div>
                         <label class="text-[11px] font-bold text-slate-700">Paso 2 • Folio / Ref. Cotización</label>
@@ -416,7 +415,6 @@
                     </div>
                 </div>
 
-                <!-- PASO 4: GENERADOR DE CORREO DE AUTORIZACIÓN -->
                 <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-100">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-blue-950"><i class="fa-solid fa-envelope-open-text mr-1.5 text-blue-600"></i>Paso 4 • Correo para Autorización</span>
@@ -427,18 +425,14 @@
                     <textarea id="mEmailDraft" rows="4" readonly class="w-full p-2.5 bg-white border border-blue-200 rounded-xl text-[11px] text-slate-700 font-mono outline-none"></textarea>
                 </div>
 
-                <!-- PASO 5: VALIDACIÓN DE MARCA / SUPERVISOR -->
                 <div class="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/70 flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <span class="text-xs font-bold text-amber-950 block"><i class="fa-solid fa-stamp mr-1.5 text-amber-600"></i>Paso 5 • Visto Bueno Marca / Supervisor</span>
                         <span id="mApprovalStatus" class="text-[11px] text-amber-800">Pendiente de confirmación</span>
                     </div>
-                    <div id="mApprovalActions" class="flex items-center gap-2">
-                        <!-- Dinámico -->
-                    </div>
+                    <div id="mApprovalActions" class="flex items-center gap-2"></div>
                 </div>
 
-                <!-- PASO 7: REVISIÓN FINAL Y CONTROL -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                     <span class="text-xs font-bold text-slate-900 block mb-2.5"><i class="fa-solid fa-list-check mr-1.5 text-emerald-600"></i>Paso 7 • Revisión Final y Control (Antes de cierre AMEX)</span>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
@@ -451,7 +445,6 @@
                     </div>
                 </div>
 
-                <!-- BOTONES DE GUARDADO Y AVANCE -->
                 <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-slate-100">
                     <button type="button" onclick="saveManageChanges(false)" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
                         Guardar Cambios
@@ -468,12 +461,28 @@
     </div>
 
     <script>
-        function selectRoleCard(roleValue, clickedBtn) {
+        const ROLE_DESCRIPTIONS = {
+            'EJECUTIVO': 'Registra eventos, elabora cotizaciones, facturas y correos.',
+            'MARCA': 'Valida eventos de su marca, otorga Vo.Bo. y revisa AMEX.',
+            'ADMIN': 'Supervisión global, control de etapas y exportación total.'
+        };
+
+        function selectRoleCard(roleValue, index, clickedBtn) {
             document.getElementById('regRole').value = roleValue;
-            document.querySelectorAll('#roleCardsGroup .role-pill').forEach(function(btn) {
+            document.getElementById('roleGlider').style.transform = `translateX(${index * 100}%)`;
+
+            document.querySelectorAll('#roleCardsGroup .role-seg-btn').forEach(function(btn) {
                 btn.classList.remove('active');
             });
             clickedBtn.classList.add('active');
+
+            const descText = document.getElementById('roleDescText');
+            const descBanner = document.getElementById('roleDescBanner');
+            descBanner.classList.remove('banner-pop');
+            void descBanner.offsetWidth;
+            descText.textContent = ROLE_DESCRIPTIONS[roleValue];
+            descBanner.classList.add('banner-pop');
+
             document.getElementById('brandSelectBox').classList.toggle('hidden', roleValue !== 'MARCA');
             document.getElementById('adminCodeBox').classList.toggle('hidden', roleValue !== 'ADMIN');
         }
