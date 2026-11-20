@@ -55,7 +55,7 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 32px;
+    padding: 34px;
     z-index: 4;
     transition: right 0.7s ease-in-out 0.4s, opacity 0.4s ease 0.4s, visibility 0s 0.6s;
 }
@@ -92,7 +92,8 @@ body {
     width: 100%;
 }
 
-.input-box input {
+.input-box input,
+.input-box select {
     width: 100%;
     padding: 11.5px 42px 11.5px 16px;
     background: #f1f5f9;
@@ -103,9 +104,11 @@ body {
     color: #0f172a;
     font-weight: 500;
     transition: all 0.25s ease;
+    appearance: none;
 }
 
-.input-box input:focus {
+.input-box input:focus,
+.input-box select:focus {
     background: #ffffff;
     border-color: #2563eb;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
@@ -122,7 +125,8 @@ body {
     pointer-events: none;
 }
 
-.input-box input:focus ~ .field-icon {
+.input-box input:focus ~ .field-icon,
+.input-box select:focus ~ .field-icon {
     color: #2563eb;
 }
 
@@ -190,7 +194,6 @@ body {
     transform: none;
 }
 
-/* Botón Google - Asegurado encima y clicable */
 .btn-google {
     position: relative;
     z-index: 10;
@@ -229,7 +232,7 @@ body {
 }
 
 /* =========================================================
-   PANEL CURVO DESLIZANTE (AZUL CORPORATIVO ORIGINAL)
+   PANEL CURVO DESLIZANTE
 ========================================================= */
 .toggle-box {
     position: absolute;
@@ -322,7 +325,7 @@ body {
 }
 
 /* =========================================================
-   ANIMACIONES DEL DASHBOARD Y TABLA
+   ANIMACIONES DEL DASHBOARD Y MODALES
 ========================================================= */
 .fade-in-screen {
     animation: screenFade 0.45s ease-out forwards;
@@ -364,12 +367,9 @@ body {
     }
 }
 
-/* =========================================================
-   ADAPTACIÓN RESPONSIVA MÓVIL
-========================================================= */
 @media screen and (max-width: 768px) {
     .auth-container {
-        height: 690px;
+        height: 700px;
     }
     .form-box {
         top: auto;
