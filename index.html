@@ -67,29 +67,40 @@
                 </form>
             </div>
 
-            <!-- FORMULARIO REGISTRO DE USUARIO -->
+            <!-- FORMULARIO REGISTRO DE USUARIO (2 PERFILES: EJECUTIVO / ADMINISTRADOR) -->
             <div class="form-box register">
                 <form id="registerForm" class="w-full max-w-xs">
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-2">
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Crear Cuenta</h1>
-                    <p class="text-xs text-slate-400 mb-4">Registra tu correo y contraseña</p>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-1">Crear Cuenta</h1>
+                    <p class="text-xs text-slate-400 mb-3">Selecciona tu perfil operativo</p>
 
-                    <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-left"></div>
+                    <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2.5 text-left"></div>
 
-                    <div class="input-box">
+                    <div class="input-box !my-2">
                         <input type="email" id="regEmail" required placeholder="Correo electrónico">
                         <i class="fa-solid fa-envelope field-icon"></i>
                     </div>
-                    <div class="input-box">
+                    <div class="input-box !my-2">
                         <input type="password" id="regPass" required minlength="6" placeholder="Contraseña (mín. 6 caracteres)">
                         <button type="button" onclick="togglePasswordVisibility('regPass', this)" class="toggle-pass-btn" title="Mostrar contraseña">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
+                    <div class="input-box !my-2">
+                        <select id="regRole" onchange="toggleAdminCodeField()">
+                            <option value="EJECUTIVO">Perfil: Ejecutivo</option>
+                            <option value="ADMIN">Perfil: Administrador</option>
+                        </select>
+                        <i class="fa-solid fa-id-badge field-icon"></i>
+                    </div>
+                    <div id="adminCodeBox" class="input-box !my-2 hidden">
+                        <input type="password" id="regAdminCode" placeholder="Código Admin (ELC-ADMIN)">
+                        <i class="fa-solid fa-key field-icon"></i>
+                    </div>
 
-                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-3">Registrar y Entrar</button>
+                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-2">Registrar y Entrar</button>
                 </form>
             </div>
 
@@ -135,7 +146,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h1 class="text-base sm:text-lg font-bold tracking-tight">ESTÉE LAUDER COMPANIES</h1>
-                            <span class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-medium">Semana W47</span>
+                            <span id="roleBadge" class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-semibold uppercase">Perfil</span>
                         </div>
                         <p class="text-xs text-blue-200">
                             Miércoles / Jueves a Domingo • 
@@ -145,13 +156,12 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
+                    <!-- Selector visible solo para Administrador para alternar vista -->
+                    <div id="adminViewSwitch" class="hidden bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-user-gear text-blue-300 text-xs"></i>
                         <select id="roleSelector" onchange="renderApp()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
-                            <option value="ADMIN" class="text-slate-900">Vista Completa (Admin)</option>
-                            <option value="EJECUTIVO" class="text-slate-900">Ejecutivo Marca (Pasos 1, 5, 6)</option>
-                            <option value="OPS" class="text-slate-900">Eddy / Mariana S. (Pasos 2, 3, 4)</option>
-                            <option value="FINANZAS" class="text-slate-900">Mariana Marín - Finanzas (Pasos 7, 8)</option>
+                            <option value="ADMIN" class="text-slate-900">Perfil: Administrador</option>
+                            <option value="EJECUTIVO" class="text-slate-900">Simular: Ejecutivo</option>
                         </select>
                     </div>
 
@@ -176,7 +186,7 @@
                         <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-check"></i></span>
                     </div>
                     <h2 id="kpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Capacidad: ~90 / fin de sem.</p>
+                    <p id="kpiTotalSub" class="text-[11px] text-slate-400 mt-0.5">Capacidad: ~90 / fin de sem.</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
@@ -185,7 +195,7 @@
                         <span class="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xs"><i class="fa-solid fa-money-bill-transfer"></i></span>
                     </div>
                     <h2 id="kpiSpei" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Eddy / Mariana S. (P2→P3)</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Validación / Dispersión (P2→P3)</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
@@ -194,7 +204,7 @@
                         <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
                     </div>
                     <h2 id="kpiFactura" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Ejecutivo Marca (P5→P6)</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Ejecutivo (P5→P6)</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
@@ -203,7 +213,7 @@
                         <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-brands fa-cc-amex"></i></span>
                     </div>
                     <h2 id="kpiAmex" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Mariana Marín (P7→P8)</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Cierre Admin (P7→P8)</p>
                 </div>
 
                 <div class="bg-white p-5 smooth-card shadow-md border border-slate-100 col-span-2 lg:col-span-1">
@@ -220,8 +230,8 @@
             <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <div>
-                        <h3 class="text-base font-bold text-slate-900">Flujo Operativo de 8 Pasos</h3>
-                        <p class="text-xs text-slate-400">Gestión en tiempo real conectada a Firestore</p>
+                        <h3 id="tableTitle" class="text-base font-bold text-slate-900">Flujo Operativo de 8 Pasos</h3>
+                        <p id="tableSubtitle" class="text-xs text-slate-400">Gestión en tiempo real conectada a Firestore</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <select id="filterBrand" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
