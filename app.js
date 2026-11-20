@@ -65,18 +65,6 @@ window.togglePasswordVisibility = (inputId, btn) => {
     }
 };
 
-window.selectRoleCard = (roleValue, clickedBtn) => {
-    document.getElementById('regRole').value = roleValue;
-
-    document.querySelectorAll('#roleCardsGroup .role-pill').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    clickedBtn.classList.add('active');
-
-    document.getElementById('brandSelectBox').classList.toggle('hidden', roleValue !== 'MARCA');
-    document.getElementById('adminCodeBox').classList.toggle('hidden', roleValue !== 'ADMIN');
-};
-
 let currentUser = {
     uid: '',
     email: '',
