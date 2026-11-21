@@ -63,7 +63,7 @@ window.showToast = (title, message, type = 'info') => {
             <h4 class="text-xs font-bold text-slate-900">${title}</h4>
             <p class="text-[11px] text-slate-500 leading-snug mt-0.5">${message}</p>
         </div>
-        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 text-xs">
+        <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 text-xs">
             <i class="fa-solid fa-xmark"></i>
         </button>
     `;
@@ -628,60 +628,7 @@ window.exportExcelGeneral = () => {
 };
 
 // =========================================================
-// 9. BOT DE AYUDA INTERACTIVO
-// =========================================================
-window.toggleHelpBot = () => {
-    document.getElementById('helpBotWindow').classList.toggle('hidden');
-};
-
-const BOT_ANSWERS = {
-    supervisor: '<b>Perfil Supervisor:</b> En tu pantalla puedes programar nuevos eventos, elegir cualquiera de las 7 marcas, definir precios/presupuestos y asignar a la persona contratada con su número de WhatsApp.',
-    ejecutivo: '<b>Perfil Ejecutivo:</b> Verifica la planeación del supervisor, presiona el botón verde <b>Enviar Planeación</b> para mandar todo por WhatsApp, descarga los tickets subidos y carga una o varias facturas.',
-    contratado: '<b>Perfil Persona Contratada:</b> Consulta tus eventos asignados y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF de tus tickets.',
-    portales: '<b>Portales de Facturación:</b> En la pantalla de <b>Ejecutivo</b> tienes acceso directo con un clic a <b>Costco, Walmart, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.'
-};
-
-window.askBot = (topic) => {
-    const area = document.getElementById('botMessagesArea');
-    const titles = {
-        supervisor: '¿Qué hace el perfil Supervisor?',
-        ejecutivo: '¿Cómo facturar y mandar WhatsApp?',
-        contratado: '¿Cómo subir varios tickets?',
-        portales: '¿Dónde están los portales de facturación?'
-    };
-
-    area.innerHTML += `<div class="bot-msg-user">${titles[topic]}</div>`;
-    setTimeout(() => {
-        area.innerHTML += `<div class="bot-msg-ai">${BOT_ANSWERS[topic]}</div>`;
-        area.scrollTop = area.scrollHeight;
-    }, 220);
-};
-
-document.getElementById('botChatForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('botUserInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    const area = document.getElementById('botMessagesArea');
-    area.innerHTML += `<div class="bot-msg-user">${text}</div>`;
-    input.value = '';
-
-    const lower = text.toLowerCase();
-    let reply = 'Puedes usar el selector superior <b>"Pantalla: ..."</b> para cambiar entre Supervisor, Ejecutivo y Persona Contratada. ¿Necesitas ayuda con tickets, facturas, WhatsApp o algún portal?';
-    if (lower.includes('ticket')) reply = BOT_ANSWERS.contratado;
-    else if (lower.includes('factura') || lower.includes('costco') || lower.includes('walmart') || lower.includes('liverpool') || lower.includes('soriana') || lower.includes('comer') || lower.includes('palacio')) reply = BOT_ANSWERS.portales;
-    else if (lower.includes('whatsapp') || lower.includes('ejecutivo')) reply = BOT_ANSWERS.ejecutivo;
-    else if (lower.includes('supervisor') || lower.includes('planea') || lower.includes('precio')) reply = BOT_ANSWERS.supervisor;
-
-    setTimeout(() => {
-        area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
-        area.scrollTop = area.scrollHeight;
-    }, 250);
-});
-
-// =========================================================
-// 10. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 3 PANTALLAS
+// 9. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 3 PANTALLAS
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
@@ -748,12 +695,12 @@ function renderSupervisorView() {
                     </div>
                     <div class="flex flex-wrap gap-1">
                         ${invoices.length > 0
-                            ? invoices.map(inv => `<button onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-download mr-1"></i>${inv.ref}</button>`).join('')
+                            ? invoices.map(inv => `<button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-download mr-1"></i>${inv.ref}</button>`).join('')
                             : `<span class="text-[10px] text-slate-400">Sin facturas</span>`}
                     </div>
                 </td>
                 <td class="py-3.5 px-3 text-right">
-                    <button onclick="deleteEvent('${ev.docId}', '${ev.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
+                    <button type="button" onclick="deleteEvent('${ev.docId}', '${ev.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
                         <i class="fa-solid fa-trash-can text-xs"></i>
                     </button>
                 </td>
@@ -800,7 +747,7 @@ function renderEjecutivoView() {
                         <span class="text-slate-400 block text-[10px]">Persona Contratada</span>
                         <span class="font-bold text-slate-800">${ev.contractorName}</span> <span class="text-slate-400">(${ev.contractorPhone})</span>
                     </div>
-                    <button onclick="sendWhatsAppPlan('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                    <button type="button" onclick="sendWhatsAppPlan('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
                         <i class="fa-brands fa-whatsapp text-sm"></i>
                         <span>Enviar Planeación</span>
                     </button>
@@ -818,7 +765,7 @@ function renderEjecutivoView() {
                                 ? tickets.map(t => `
                                     <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/70 text-[11px]">
                                         <span class="font-semibold text-amber-900 truncate pr-1" title="${t.fileName}">${t.ref}</span>
-                                        <button onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold shrink-0">
+                                        <button type="button" onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold shrink-0">
                                             <i class="fa-solid fa-download"></i>
                                         </button>
                                     </div>
@@ -831,7 +778,7 @@ function renderEjecutivoView() {
                     <div class="p-3 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-bold text-blue-900"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Facturas (${invoices.length})</span>
-                            <button onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition">
+                            <button type="button" onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition">
                                 + Subir
                             </button>
                         </div>
@@ -841,10 +788,10 @@ function renderEjecutivoView() {
                                     <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-blue-200/70 text-[11px]">
                                         <span class="font-semibold text-blue-900 truncate pr-1" title="${inv.fileName}">${inv.ref}</span>
                                         <div class="flex items-center gap-1 shrink-0">
-                                            <button onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold" title="Descargar">
+                                            <button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold" title="Descargar">
                                                 <i class="fa-solid fa-download"></i>
                                             </button>
-                                            <button onclick="removeArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-1.5 py-0.5 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white text-[10px]" title="Quitar">
+                                            <button type="button" onclick="removeArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-1.5 py-0.5 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white text-[10px]" title="Quitar">
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
@@ -899,7 +846,7 @@ function renderContratadoView() {
                 <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-receipt text-blue-600 mr-1.5"></i>Tickets Cargados (${tickets.length})</span>
-                        <button onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold shadow-sm transition flex items-center gap-1.5">
+                        <button type="button" onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold shadow-sm transition flex items-center gap-1.5">
                             <i class="fa-solid fa-plus"></i>
                             <span>Agregar Tickets</span>
                         </button>
@@ -913,7 +860,7 @@ function renderContratadoView() {
                                         <span class="font-bold text-emerald-900">${t.ref}</span>
                                         <span class="text-[10px] text-emerald-700 block truncate">${t.fileName}</span>
                                     </div>
-                                    <button onclick="removeArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-white hover:bg-red-500 text-red-500 hover:text-white border border-emerald-200 flex items-center justify-center shrink-0 transition" title="Eliminar ticket">
+                                    <button type="button" onclick="removeArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-white hover:bg-red-500 text-red-500 hover:text-white border border-emerald-200 flex items-center justify-center shrink-0 transition" title="Eliminar ticket">
                                         <i class="fa-solid fa-trash-can text-[11px]"></i>
                                     </button>
                                 </div>
