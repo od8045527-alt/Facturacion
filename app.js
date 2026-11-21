@@ -21,7 +21,8 @@ import {
     deleteDoc,
     onSnapshot, 
     query, 
-    orderBy 
+    orderBy,
+    limit
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -40,7 +41,56 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 // =========================================================
-// 1. ANIMACIÓN PANEL LOGIN / REGISTRO & CONTROLES
+// 1. SISTEMA DE NOTIFICACIONES TOAST & MODALES MEJORADOS
+// =========================================================
+window.showToast = (title, message, type = 'info') => {
+    const container = document.getElementById('toastContainer');
+    const styles = {
+        success: { icon: 'fa-circle-check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        warning: { icon: 'fa-triangle-exclamation', color: 'text-amber-600', bg: 'bg-amber-50' },
+        error: { icon: 'fa-circle-xmark', color: 'text-red-600', bg: 'bg-red-50' },
+        info: { icon: 'fa-bell', color: 'text-blue-600', bg: 'bg-blue-50' }
+    };
+    const st = styles[type] || styles.info;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-item';
+    toast.innerHTML = `
+        <div class="w-8 h-8 rounded-xl ${st.bg} ${st.color} flex items-center justify-center shrink-0 text-sm">
+            <i class="fa-solid ${st.icon}"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-bold text-slate-900">${title}</h4>
+            <p class="text-[11px] text-slate-500 leading-snug mt-0.5">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 text-xs">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 4500);
+};
+
+let confirmCallback = null;
+window.openConfirmModal = (title, text, onConfirm) => {
+    document.getElementById('confirmModalTitle').textContent = title;
+    document.getElementById('confirmModalText').textContent = text;
+    confirmCallback = onConfirm;
+    document.getElementById('confirmModal').classList.remove('hidden');
+};
+window.closeConfirmModal = () => {
+    document.getElementById('confirmModal').classList.add('hidden');
+    confirmCallback = null;
+};
+document.getElementById('confirmModalAcceptBtn').addEventListener('click', async () => {
+    if (confirmCallback) await confirmCallback();
+    window.closeConfirmModal();
+});
+
+// =========================================================
+// 2. ANIMACIÓN PANEL LOGIN / REGISTRO & CONTROLES
 // =========================================================
 const authContainer = document.getElementById('authContainer');
 document.getElementById('registerToggleBtn').addEventListener('click', () => {
@@ -68,10 +118,12 @@ let currentUser = {
     uid: '',
     email: '',
     display: '',
-    role: 'SUPERVISOR' // 'SUPERVISOR', 'EJECUTIVO', 'CONTRATADO'
+    role: 'SUPERVISOR'
 };
 let eventsList = [];
+let notificationsList = [];
 let unsubscribeEvents = null;
+let unsubscribeNotifs = null;
 let uploadTarget = { docId: null, type: 'TICKET' };
 
 function showLoginAlert(message, isSuccess = false) {
@@ -84,7 +136,7 @@ function showLoginAlert(message, isSuccess = false) {
 }
 
 // =========================================================
-// 2. AUTENTICACIÓN (GOOGLE, CORREO/CONTRASEÑA, REGISTRO)
+// 3. AUTENTICACIÓN (GOOGLE, CORREO/CONTRASEÑA, REGISTRO)
 // =========================================================
 document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
     const btnGoogle = document.getElementById('btnGoogleLogin');
@@ -207,6 +259,7 @@ onAuthStateChanged(auth, async (user) => {
 
         window.switchProfileScreen(currentUser.role);
         listenFirestoreEvents();
+        listenNotifications();
     } else {
         document.getElementById('appShell').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
@@ -215,11 +268,74 @@ onAuthStateChanged(auth, async (user) => {
 
 window.logout = async () => {
     if (unsubscribeEvents) unsubscribeEvents();
+    if (unsubscribeNotifs) unsubscribeNotifs();
     await signOut(auth);
 };
 
 // =========================================================
-// 3. CAMBIO ENTRE LAS 3 PANTALLAS DE PERFIL
+// 4. CENTRO DE NOTIFICACIONES EN TIEMPO REAL
+// =========================================================
+async function pushSystemNotification(title, message, targetRole) {
+    await addDoc(collection(db, "notificaciones_elc"), {
+        title,
+        message,
+        targetRole,
+        author: currentUser.display,
+        read: false,
+        creadoEn: new Date().toISOString()
+    });
+}
+
+function listenNotifications() {
+    if (unsubscribeNotifs) unsubscribeNotifs();
+    const q = query(collection(db, "notificaciones_elc"), orderBy("creadoEn", "desc"), limit(20));
+    unsubscribeNotifs = onSnapshot(q, (snapshot) => {
+        notificationsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderNotifications();
+    });
+}
+
+function renderNotifications() {
+    const unread = notificationsList.filter(n => !n.read);
+    const badge = document.getElementById('notifBadge');
+    if (unread.length > 0) {
+        badge.textContent = unread.length;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    const listEl = document.getElementById('notifList');
+    if (notificationsList.length === 0) {
+        listEl.innerHTML = `<div class="p-6 text-center text-slate-400">Sin notificaciones recientes.</div>`;
+        return;
+    }
+
+    listEl.innerHTML = notificationsList.map(n => `
+        <div class="p-3.5 ${n.read ? 'bg-white' : 'bg-blue-50/70'} hover:bg-slate-50 transition">
+            <div class="flex justify-between items-start gap-2">
+                <span class="font-bold text-slate-900">${n.title}</span>
+                ${!n.read ? '<span class="w-2 h-2 rounded-full bg-blue-600 shrink-0 mt-1"></span>' : ''}
+            </div>
+            <p class="text-[11px] text-slate-600 mt-0.5">${n.message}</p>
+            <span class="text-[10px] text-slate-400 block mt-1">Por ${n.author || 'Sistema'} • ${new Date(n.creadoEn).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+    `).join('');
+}
+
+window.toggleNotifPanel = () => {
+    document.getElementById('notifDropdown').classList.toggle('hidden');
+};
+
+window.markAllNotificationsRead = async () => {
+    const unread = notificationsList.filter(n => !n.read);
+    for (const item of unread) {
+        await updateDoc(doc(db, "notificaciones_elc", item.id), { read: true });
+    }
+};
+
+// =========================================================
+// 5. CAMBIO ENTRE LAS 3 PANTALLAS DE PERFIL
 // =========================================================
 window.switchProfileScreen = (role) => {
     document.getElementById('screenSwitcher').value = role;
@@ -240,7 +356,7 @@ window.switchProfileScreen = (role) => {
 };
 
 // =========================================================
-// 4. PANTALLA SUPERVISOR: PROGRAMAR EVENTO Y PLANEACIÓN
+// 6. PANTALLA SUPERVISOR: PROGRAMAR EVENTO Y PLANEACIÓN
 // =========================================================
 document.getElementById('supervisorEventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -255,29 +371,35 @@ document.getElementById('supervisorEventForm').addEventListener('submit', async 
         planDetails: document.getElementById('supPlanDetails').value.trim(),
         supervisorName: currentUser.display,
         whatsappSent: false,
-        ticketRef: '',
-        ticketFileName: '',
-        ticketFileData: '',
-        invoiceRef: '',
-        invoiceFileName: '',
-        invoiceFileData: '',
+        tickets: [],
+        invoices: [],
         creadoEn: new Date().toISOString()
     };
 
     await addDoc(collection(db, "eventos_elc"), newEv);
+    await pushSystemNotification(
+        `Nueva Planeación ${newEv.id}`,
+        `${newEv.brand} en ${newEv.store} (${newEv.dates}) asignado a ${newEv.contractorName}.`,
+        'EJECUTIVO'
+    );
+
     e.target.reset();
-    alert(`Evento ${newEv.id} programado y publicado correctamente.`);
+    window.showToast('Planeación Publicada', `Evento ${newEv.id} creado y notificado al equipo.`, 'success');
 });
 
-window.deleteEvent = async (docId, eventCode) => {
-    if (!docId) return;
-    if (confirm(`¿Eliminar el evento ${eventCode}?`)) {
-        await deleteDoc(doc(db, "eventos_elc", docId));
-    }
+window.deleteEvent = (docId, eventCode) => {
+    window.openConfirmModal(
+        `Eliminar evento ${eventCode}`,
+        'Se borrará la planeación, tickets y facturas asociadas a este folio.',
+        async () => {
+            await deleteDoc(doc(db, "eventos_elc", docId));
+            window.showToast('Evento Eliminado', `El folio ${eventCode} fue eliminado.`, 'warning');
+        }
+    );
 };
 
 // =========================================================
-// 5. ENVÍO WHATSAPP DESDE PANTALLA EJECUTIVO
+// 7. ENVÍO WHATSAPP DESDE PANTALLA EJECUTIVO
 // =========================================================
 window.sendWhatsAppPlan = async (docId) => {
     const ev = eventsList.find(item => item.docId === docId);
@@ -298,9 +420,10 @@ window.sendWhatsAppPlan = async (docId) => {
 📋 *Planeación y Precios:*
 ${ev.planDetails}
 
-Por favor ingresa al portal para confirmar y subir tus *tickets* al finalizar para generar la factura.`;
+Por favor ingresa al portal para confirmar y subir todos tus *tickets* al finalizar para generar las facturas.`;
 
     await updateDoc(doc(db, "eventos_elc", docId), { whatsappSent: true });
+    window.showToast('WhatsApp Preparado', `Abriendo chat con ${ev.contractorName}...`, 'success');
 
     const waUrl = phoneWithCountry
         ? `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`
@@ -309,20 +432,37 @@ Por favor ingresa al portal para confirmar y subir tus *tickets* al finalizar pa
 };
 
 // =========================================================
-// 6. CARGA Y DESCARGA DE TICKETS Y FACTURAS
+// 8. CARGA, DESCARGA Y ELIMINACIÓN DE MÚLTIPLES TICKETS Y FACTURAS
 // =========================================================
+function getEventTickets(ev) {
+    if (Array.isArray(ev.tickets)) return ev.tickets;
+    if (ev.ticketRef) {
+        return [{ id: 'legacy-t', ref: ev.ticketRef, fileName: ev.ticketFileName, fileData: ev.ticketFileData }];
+    }
+    return [];
+}
+
+function getEventInvoices(ev) {
+    if (Array.isArray(ev.invoices)) return ev.invoices;
+    if (ev.invoiceRef) {
+        return [{ id: 'legacy-i', ref: ev.invoiceRef, fileName: ev.invoiceFileName, fileData: ev.invoiceFileData }];
+    }
+    return [];
+}
+
 window.openUploadModal = (docId, type) => {
     uploadTarget = { docId, type };
     document.getElementById('uploadModalTitle').textContent =
-        type === 'TICKET' ? 'Subir Ticket de Compra' : 'Subir Factura Generada';
-    document.getElementById('uploadModalDesc').textContent =
+        type === 'TICKET' ? 'Subir Tickets de Compra' : 'Subir Facturas Generadas';
+    document.getElementById('uploadModalSubtitle').textContent =
         type === 'TICKET'
-            ? 'Adjunta la foto o PDF del ticket para que el Ejecutivo elabore la factura.'
-            : 'Adjunta la factura (PDF/XML/Imagen) para que quede lista para descarga.';
+            ? 'Puedes adjuntar uno o varios tickets a la vez'
+            : 'Puedes adjuntar una o varias facturas (PDF, XML o Imagen)';
     document.getElementById('uploadRefInput').placeholder =
-        type === 'TICKET' ? 'Ej. Ticket #9021' : 'Ej. Factura F-2026-014';
+        type === 'TICKET' ? 'Ej. Tickets Costco / Comida / Materiales' : 'Ej. Factura F-2026-014';
 
     document.getElementById('uploadForm').reset();
+    document.getElementById('selectedFilesCount').textContent = 'Ningún archivo seleccionado aún';
     document.getElementById('uploadModal').classList.remove('hidden');
 };
 
@@ -331,71 +471,140 @@ window.closeUploadModal = () => {
     uploadTarget = { docId: null, type: 'TICKET' };
 };
 
+window.updateSelectedFilesPreview = (input) => {
+    const count = input.files ? input.files.length : 0;
+    const label = document.getElementById('selectedFilesCount');
+    if (count === 0) {
+        label.textContent = 'Ningún archivo seleccionado aún';
+    } else if (count === 1) {
+        label.textContent = `1 archivo listo: ${input.files[0].name}`;
+    } else {
+        label.textContent = `${count} archivos seleccionados listos para subir`;
+    }
+};
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!uploadTarget.docId) return;
 
+    const ev = eventsList.find(item => item.docId === uploadTarget.docId);
+    if (!ev) return;
+
     const refText = document.getElementById('uploadRefInput').value.trim();
-    const fileInput = document.getElementById('uploadFileInput');
-    const file = fileInput.files[0];
+    const files = Array.from(document.getElementById('uploadFileInput').files || []);
     const btn = document.getElementById('btnConfirmUpload');
 
-    if (!file) return;
-    if (file.size > 750 * 1024) {
-        alert('El archivo pesa más de 750 KB. Por favor sube una imagen más ligera o PDF comprimido.');
-        return;
+    if (files.length === 0) return;
+
+    for (const f of files) {
+        if (f.size > 700 * 1024) {
+            window.showToast('Archivo muy pesado', `"${f.name}" supera los 700 KB. Comprímelo antes de subir.`, 'error');
+            return;
+        }
     }
 
     btn.disabled = true;
-    btn.textContent = 'Subiendo...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Subiendo...</span>';
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        const base64Data = event.target.result;
-        const updatePayload = uploadTarget.type === 'TICKET'
-            ? {
-                ticketRef: refText,
-                ticketFileName: file.name,
-                ticketFileData: base64Data
-            }
-            : {
-                invoiceRef: refText,
-                invoiceFileName: file.name,
-                invoiceFileData: base64Data
-            };
+    try {
+        const newItems = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const base64Data = await readFileAsBase64(file);
+            newItems.push({
+                id: Date.now() + '-' + i,
+                ref: files.length > 1 ? `${refText} (${i + 1})` : refText,
+                fileName: file.name,
+                fileData: base64Data,
+                uploadedBy: currentUser.display,
+                uploadedAt: new Date().toISOString()
+            });
+        }
 
-        await updateDoc(doc(db, "eventos_elc", uploadTarget.docId), updatePayload);
-        btn.disabled = false;
-        btn.textContent = 'Subir y Guardar';
+        const eventRef = doc(db, "eventos_elc", uploadTarget.docId);
+        if (uploadTarget.type === 'TICKET') {
+            const currentTickets = getEventTickets(ev);
+            await updateDoc(eventRef, { tickets: [...currentTickets, ...newItems] });
+            await pushSystemNotification(
+                `Tickets Subidos (${ev.id})`,
+                `${currentUser.display} cargó ${newItems.length} ticket(s) para ${ev.brand} - ${ev.store}.`,
+                'EJECUTIVO'
+            );
+            window.showToast('Tickets Guardados', `Se agregaron ${newItems.length} ticket(s) correctamente.`, 'success');
+        } else {
+            const currentInvoices = getEventInvoices(ev);
+            await updateDoc(eventRef, { invoices: [...currentInvoices, ...newItems] });
+            await pushSystemNotification(
+                `Facturas Disponibles (${ev.id})`,
+                `${currentUser.display} subió ${newItems.length} factura(s) para ${ev.brand} - ${ev.store}.`,
+                'SUPERVISOR'
+            );
+            window.showToast('Facturas Guardadas', `Se agregaron ${newItems.length} factura(s) para descarga.`, 'success');
+        }
+
         window.closeUploadModal();
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+        console.error(err);
+        window.showToast('Error al subir', 'No se pudieron guardar los archivos. Intenta con archivos más ligeros.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-upload"></i><span>Agregar Archivos</span>';
+    }
 });
 
-window.downloadStoredFile = (docId, type) => {
+window.downloadArrayFile = (docId, type, itemId) => {
     const ev = eventsList.find(item => item.docId === docId);
     if (!ev) return;
 
-    const dataUrl = type === 'TICKET' ? ev.ticketFileData : ev.invoiceFileData;
-    const fileName = type === 'TICKET' ? (ev.ticketFileName || `Ticket_${ev.id}`) : (ev.invoiceFileName || `Factura_${ev.id}`);
-
-    if (!dataUrl) {
-        alert('No hay archivo adjunto disponible para descargar.');
+    const list = type === 'TICKET' ? getEventTickets(ev) : getEventInvoices(ev);
+    const item = list.find(x => x.id === itemId);
+    if (!item || !item.fileData) {
+        window.showToast('Sin archivo', 'No se encontró el archivo adjunto.', 'warning');
         return;
     }
 
     const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = fileName;
+    link.href = item.fileData;
+    link.download = item.fileName || `${type}_${ev.id}`;
     link.click();
+};
+
+window.removeArrayFile = (docId, type, itemId) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+
+    window.openConfirmModal(
+        `Eliminar ${type === 'TICKET' ? 'Ticket' : 'Factura'}`,
+        '¿Deseas quitar este archivo del expediente?',
+        async () => {
+            const eventRef = doc(db, "eventos_elc", docId);
+            if (type === 'TICKET') {
+                const updated = getEventTickets(ev).filter(x => x.id !== itemId);
+                await updateDoc(eventRef, { tickets: updated, ticketRef: '' });
+            } else {
+                const updated = getEventInvoices(ev).filter(x => x.id !== itemId);
+                await updateDoc(eventRef, { invoices: updated, invoiceRef: '' });
+            }
+            window.showToast('Archivo Eliminado', 'Se actualizó la lista de documentos.', 'info');
+        }
+    );
 };
 
 window.exportExcelGeneral = () => {
     if (eventsList.length === 0) {
-        alert('No hay eventos registrados para exportar.');
+        window.showToast('Tabla vacía', 'No hay eventos registrados para exportar.', 'warning');
         return;
     }
-    const headers = ['Folio', 'Marca', 'Tienda', 'Fechas', 'Precio_MXN', 'Contratado', 'Telefono', 'Planeacion', 'Ticket_Ref', 'Factura_Ref'];
+    const headers = ['Folio', 'Marca', 'Tienda', 'Fechas', 'Precio_MXN', 'Contratado', 'Telefono', 'Planeacion', 'Cant_Tickets', 'Cant_Facturas'];
     const rows = eventsList.map(ev => [
         ev.id,
         ev.brand,
@@ -405,8 +614,8 @@ window.exportExcelGeneral = () => {
         `"${(ev.contractorName || '').replace(/"/g, '""')}"`,
         ev.contractorPhone || '',
         `"${(ev.planDetails || '').replace(/"/g, '""')}"`,
-        ev.ticketRef || 'Pendiente',
-        ev.invoiceRef || 'Pendiente'
+        getEventTickets(ev).length,
+        getEventInvoices(ev).length
     ]);
     const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -419,7 +628,60 @@ window.exportExcelGeneral = () => {
 };
 
 // =========================================================
-// 7. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 3 PANTALLAS
+// 9. BOT DE AYUDA INTERACTIVO
+// =========================================================
+window.toggleHelpBot = () => {
+    document.getElementById('helpBotWindow').classList.toggle('hidden');
+};
+
+const BOT_ANSWERS = {
+    supervisor: '<b>Perfil Supervisor:</b> En tu pantalla puedes programar nuevos eventos, elegir cualquiera de las 7 marcas, definir precios/presupuestos y asignar a la persona contratada con su número de WhatsApp.',
+    ejecutivo: '<b>Perfil Ejecutivo:</b> Verifica la planeación del supervisor, presiona el botón verde <b>Enviar Planeación</b> para mandar todo por WhatsApp, descarga los tickets subidos y carga una o varias facturas.',
+    contratado: '<b>Perfil Persona Contratada:</b> Consulta tus eventos asignados y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF de tus tickets.',
+    portales: '<b>Portales de Facturación:</b> En la pantalla de <b>Ejecutivo</b> tienes acceso directo con un clic a <b>Costco, Walmart, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.'
+};
+
+window.askBot = (topic) => {
+    const area = document.getElementById('botMessagesArea');
+    const titles = {
+        supervisor: '¿Qué hace el perfil Supervisor?',
+        ejecutivo: '¿Cómo facturar y mandar WhatsApp?',
+        contratado: '¿Cómo subir varios tickets?',
+        portales: '¿Dónde están los portales de facturación?'
+    };
+
+    area.innerHTML += `<div class="bot-msg-user">${titles[topic]}</div>`;
+    setTimeout(() => {
+        area.innerHTML += `<div class="bot-msg-ai">${BOT_ANSWERS[topic]}</div>`;
+        area.scrollTop = area.scrollHeight;
+    }, 220);
+};
+
+document.getElementById('botChatForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('botUserInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const area = document.getElementById('botMessagesArea');
+    area.innerHTML += `<div class="bot-msg-user">${text}</div>`;
+    input.value = '';
+
+    const lower = text.toLowerCase();
+    let reply = 'Puedes usar el selector superior <b>"Pantalla: ..."</b> para cambiar entre Supervisor, Ejecutivo y Persona Contratada. ¿Necesitas ayuda con tickets, facturas, WhatsApp o algún portal?';
+    if (lower.includes('ticket')) reply = BOT_ANSWERS.contratado;
+    else if (lower.includes('factura') || lower.includes('costco') || lower.includes('walmart') || lower.includes('liverpool') || lower.includes('soriana') || lower.includes('comer') || lower.includes('palacio')) reply = BOT_ANSWERS.portales;
+    else if (lower.includes('whatsapp') || lower.includes('ejecutivo')) reply = BOT_ANSWERS.ejecutivo;
+    else if (lower.includes('supervisor') || lower.includes('planea') || lower.includes('precio')) reply = BOT_ANSWERS.supervisor;
+
+    setTimeout(() => {
+        area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
+        area.scrollTop = area.scrollHeight;
+    }, 250);
+});
+
+// =========================================================
+// 10. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 3 PANTALLAS
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
@@ -444,10 +706,13 @@ function renderSupervisorView() {
     const brandFilter = document.getElementById('supFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
 
-    document.getElementById('supKpiTotal').textContent = list.length;
-    document.getElementById('supKpiTickets').textContent = list.filter(e => Boolean(e.ticketRef)).length;
-    document.getElementById('supKpiFacturados').textContent = list.filter(e => Boolean(e.invoiceRef)).length;
+    const totalTickets = list.reduce((acc, e) => acc + getEventTickets(e).length, 0);
+    const totalInvoices = list.reduce((acc, e) => acc + getEventInvoices(e).length, 0);
     const totalBudget = list.reduce((acc, e) => acc + (Number(e.price) || 0), 0);
+
+    document.getElementById('supKpiTotal').textContent = list.length;
+    document.getElementById('supKpiTickets').textContent = totalTickets;
+    document.getElementById('supKpiFacturados').textContent = totalInvoices;
     document.getElementById('supKpiBudget').textContent = '$' + totalBudget.toLocaleString('es-MX');
 
     const tbody = document.getElementById('supEventsTable');
@@ -456,43 +721,48 @@ function renderSupervisorView() {
         return;
     }
 
-    tbody.innerHTML = list.map(ev => `
-        <tr class="hover:bg-slate-50 transition">
-            <td class="py-3.5 px-3">
-                <span class="font-bold text-slate-900 block">${ev.id}</span>
-                <span class="text-[11px] font-semibold text-blue-600">${ev.brand}</span>
-            </td>
-            <td class="py-3.5 px-3">
-                <span class="font-semibold text-slate-800 block">${ev.store}</span>
-                <span class="text-[11px] text-slate-400">${ev.dates}</span>
-            </td>
-            <td class="py-3.5 px-3">
-                <span class="font-medium text-slate-700 block">${ev.contractorName}</span>
-                <span class="text-[11px] text-slate-400">${ev.contractorPhone}</span>
-            </td>
-            <td class="py-3.5 px-3 font-bold text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</td>
-            <td class="py-3.5 px-3 space-y-1">
-                <div>
-                    ${ev.ticketRef
-                        ? `<span class="text-[10px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-receipt mr-1"></i>Ticket: ${ev.ticketRef}</span>`
-                        : `<span class="text-[10px] text-slate-400">Sin ticket</span>`}
-                </div>
-                <div>
-                    ${ev.invoiceRef
-                        ? `<button onclick="downloadStoredFile('${ev.docId}', 'FACTURA')" class="text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-download mr-1"></i>Factura: ${ev.invoiceRef}</button>`
-                        : `<span class="text-[10px] text-slate-400">Sin factura</span>`}
-                </div>
-            </td>
-            <td class="py-3.5 px-3 text-right">
-                <button onclick="deleteEvent('${ev.docId}', '${ev.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
-                    <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = list.map(ev => {
+        const tickets = getEventTickets(ev);
+        const invoices = getEventInvoices(ev);
+
+        return `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="py-3.5 px-3">
+                    <span class="font-bold text-slate-900 block">${ev.id}</span>
+                    <span class="text-[11px] font-semibold text-blue-600">${ev.brand}</span>
+                </td>
+                <td class="py-3.5 px-3">
+                    <span class="font-semibold text-slate-800 block">${ev.store}</span>
+                    <span class="text-[11px] text-slate-400">${ev.dates}</span>
+                </td>
+                <td class="py-3.5 px-3">
+                    <span class="font-medium text-slate-700 block">${ev.contractorName}</span>
+                    <span class="text-[11px] text-slate-400">${ev.contractorPhone}</span>
+                </td>
+                <td class="py-3.5 px-3 font-bold text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</td>
+                <td class="py-3.5 px-3 space-y-1">
+                    <div>
+                        <span class="text-[10px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                            <i class="fa-solid fa-receipt mr-1"></i>${tickets.length} Ticket(s)
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        ${invoices.length > 0
+                            ? invoices.map(inv => `<button onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-download mr-1"></i>${inv.ref}</button>`).join('')
+                            : `<span class="text-[10px] text-slate-400">Sin facturas</span>`}
+                    </div>
+                </td>
+                <td class="py-3.5 px-3 text-right">
+                    <button onclick="deleteEvent('${ev.docId}', '${ev.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
-// RENDER 2: EJECUTIVO
+// RENDER 2: EJECUTIVO (MÚLTIPLES TICKETS Y MÚLTIPLES FACTURAS)
 function renderEjecutivoView() {
     const brandFilter = document.getElementById('ejFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -503,67 +773,93 @@ function renderEjecutivoView() {
         return;
     }
 
-    grid.innerHTML = list.map(ev => `
-        <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${ev.id} • ${ev.brand}</span>
-                    <h4 class="text-base font-bold text-slate-900 mt-1">${ev.store}</h4>
-                    <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates} • Presupuesto: <strong class="text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</strong></p>
-                </div>
-                ${ev.whatsappSent
-                    ? `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full"><i class="fa-brands fa-whatsapp mr-1"></i>Enviado</span>`
-                    : `<span class="text-[10px] font-semibold bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full">Pendiente WA</span>`}
-            </div>
+    grid.innerHTML = list.map(ev => {
+        const tickets = getEventTickets(ev);
+        const invoices = getEventInvoices(ev);
 
-            <div class="bg-white p-3 rounded-2xl border border-slate-100 text-xs text-slate-600">
-                <span class="font-bold text-slate-800 block mb-0.5">Planeación del Supervisor:</span>
-                ${ev.planDetails}
-            </div>
-
-            <div class="flex items-center justify-between text-xs bg-white px-3.5 py-2.5 rounded-2xl border border-slate-100">
-                <div>
-                    <span class="text-slate-400 block text-[10px]">Persona Contratada</span>
-                    <span class="font-bold text-slate-800">${ev.contractorName}</span> <span class="text-slate-400">(${ev.contractorPhone})</span>
-                </div>
-                <button onclick="sendWhatsAppPlan('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
-                    <i class="fa-brands fa-whatsapp text-sm"></i>
-                    <span>Enviar Planeación</span>
-                </button>
-            </div>
-
-            <!-- SECCIÓN TICKETS RECIBIDOS Y SUBIDA DE FACTURA -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-100 flex flex-col justify-between">
-                    <span class="text-[11px] font-bold text-amber-900"><i class="fa-solid fa-receipt mr-1"></i>Ticket del Contratado</span>
-                    ${ev.ticketRef
-                        ? `<div class="mt-2 flex items-center justify-between gap-1">
-                             <span class="text-[11px] font-semibold text-amber-800 truncate">${ev.ticketRef}</span>
-                             <button onclick="downloadStoredFile('${ev.docId}', 'TICKET')" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold"><i class="fa-solid fa-download mr-1"></i>Descargar</button>
-                           </div>`
-                        : `<span class="text-[11px] text-amber-700/70 mt-1 italic">Aún no sube ticket</span>`}
+        return `
+            <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${ev.id} • ${ev.brand}</span>
+                        <h4 class="text-base font-bold text-slate-900 mt-1">${ev.store}</h4>
+                        <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates} • Presupuesto: <strong class="text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</strong></p>
+                    </div>
+                    ${ev.whatsappSent
+                        ? `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full"><i class="fa-brands fa-whatsapp mr-1"></i>Enviado</span>`
+                        : `<span class="text-[10px] font-semibold bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full">Pendiente WA</span>`}
                 </div>
 
-                <div class="p-3 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-col justify-between">
-                    <span class="text-[11px] font-bold text-blue-900"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Factura para Descarga</span>
-                    ${ev.invoiceRef
-                        ? `<div class="mt-2 flex items-center justify-between gap-1">
-                             <span class="text-[11px] font-semibold text-blue-800 truncate">${ev.invoiceRef}</span>
-                             <div class="flex gap-1">
-                                 <button onclick="downloadStoredFile('${ev.docId}', 'FACTURA')" class="px-2 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-bold" title="Descargar Factura"><i class="fa-solid fa-download"></i></button>
-                                 <button onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 text-[10px] font-bold" title="Reemplazar"><i class="fa-solid fa-pen"></i></button>
-                             </div>
-                           </div>`
-                        : `<button onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="mt-2 w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition">
-                             <i class="fa-solid fa-upload mr-1"></i>Subir Factura
-                           </button>`}
+                <div class="bg-white p-3 rounded-2xl border border-slate-100 text-xs text-slate-600">
+                    <span class="font-bold text-slate-800 block mb-0.5">Planeación del Supervisor:</span>
+                    ${ev.planDetails}
+                </div>
+
+                <div class="flex items-center justify-between text-xs bg-white px-3.5 py-2.5 rounded-2xl border border-slate-100">
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Persona Contratada</span>
+                        <span class="font-bold text-slate-800">${ev.contractorName}</span> <span class="text-slate-400">(${ev.contractorPhone})</span>
+                    </div>
+                    <button onclick="sendWhatsAppPlan('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span>Enviar Planeación</span>
+                    </button>
+                </div>
+
+                <!-- LISTADO DE MÚLTIPLES TICKETS Y MÚLTIPLES FACTURAS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- Columna Tickets -->
+                    <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-amber-900"><i class="fa-solid fa-receipt mr-1"></i>Tickets (${tickets.length})</span>
+                        </div>
+                        <div class="space-y-1.5 max-h-28 overflow-y-auto">
+                            ${tickets.length > 0
+                                ? tickets.map(t => `
+                                    <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/70 text-[11px]">
+                                        <span class="font-semibold text-amber-900 truncate pr-1" title="${t.fileName}">${t.ref}</span>
+                                        <button onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold shrink-0">
+                                            <i class="fa-solid fa-download"></i>
+                                        </button>
+                                    </div>
+                                `).join('')
+                                : `<p class="text-[11px] text-amber-700/70 italic">Sin tickets subidos aún</p>`}
+                        </div>
+                    </div>
+
+                    <!-- Columna Facturas -->
+                    <div class="p-3 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-blue-900"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Facturas (${invoices.length})</span>
+                            <button onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition">
+                                + Subir
+                            </button>
+                        </div>
+                        <div class="space-y-1.5 max-h-28 overflow-y-auto">
+                            ${invoices.length > 0
+                                ? invoices.map(inv => `
+                                    <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-blue-200/70 text-[11px]">
+                                        <span class="font-semibold text-blue-900 truncate pr-1" title="${inv.fileName}">${inv.ref}</span>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <button onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold" title="Descargar">
+                                                <i class="fa-solid fa-download"></i>
+                                            </button>
+                                            <button onclick="removeArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-1.5 py-0.5 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white text-[10px]" title="Quitar">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')
+                                : `<p class="text-[11px] text-blue-700/70 italic">Sin facturas cargadas</p>`}
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-// RENDER 3: PERSONA CONTRATADA
+// RENDER 3: PERSONA CONTRATADA (MÚLTIPLES TICKETS)
 function renderContratadoView() {
     const brandFilter = document.getElementById('conFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -574,45 +870,60 @@ function renderContratadoView() {
         return;
     }
 
-    grid.innerHTML = list.map(ev => `
-        <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">${ev.brand} • ${ev.id}</span>
-                    <h4 class="text-base font-bold text-slate-900 mt-1">${ev.store}</h4>
-                    <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates}</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] text-slate-400 block">Asignado a</span>
-                    <span class="text-xs font-bold text-slate-800">${ev.contractorName}</span>
-                </div>
-            </div>
+    grid.innerHTML = list.map(ev => {
+        const tickets = getEventTickets(ev);
 
-            <div class="bg-white p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
-                <div class="flex justify-between">
-                    <span class="font-bold text-slate-800">Indicaciones del Evento:</span>
-                    <span class="font-bold text-blue-700">Monto: $${Number(ev.price).toLocaleString('es-MX')}</span>
+        return `
+            <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">${ev.brand} • ${ev.id}</span>
+                        <h4 class="text-base font-bold text-slate-900 mt-1">${ev.store}</h4>
+                        <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 block">Asignado a</span>
+                        <span class="text-xs font-bold text-slate-800">${ev.contractorName}</span>
+                    </div>
                 </div>
-                <p>${ev.planDetails}</p>
-            </div>
 
-            <div class="pt-1">
-                ${ev.ticketRef
-                    ? `<div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                         <div class="text-xs text-emerald-800">
-                             <i class="fa-solid fa-circle-check mr-1.5"></i>Ticket cargado: <strong>${ev.ticketRef}</strong> (${ev.ticketFileName})
-                         </div>
-                         <button onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-700 text-[11px] font-semibold hover:bg-emerald-100 transition">
-                             Cambiar Ticket
-                         </button>
-                       </div>`
-                    : `<button onclick="openUploadModal('${ev.docId}', 'TICKET')" class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-2">
-                         <i class="fa-solid fa-camera"></i>
-                         <span>Subir Ticket para Facturación</span>
-                       </button>`}
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
+                    <div class="flex justify-between">
+                        <span class="font-bold text-slate-800">Indicaciones del Evento:</span>
+                        <span class="font-bold text-blue-700">Monto: $${Number(ev.price).toLocaleString('es-MX')}</span>
+                    </div>
+                    <p>${ev.planDetails}</p>
+                </div>
+
+                <!-- LISTA DE TICKETS SUBIDOS + BOTÓN AGREGAR MÁS TICKETS -->
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-receipt text-blue-600 mr-1.5"></i>Tickets Cargados (${tickets.length})</span>
+                        <button onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold shadow-sm transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Agregar Tickets</span>
+                        </button>
+                    </div>
+
+                    ${tickets.length > 0
+                        ? `<div class="space-y-1.5 max-h-32 overflow-y-auto">
+                            ${tickets.map(t => `
+                                <div class="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 px-3 py-2 rounded-xl text-xs">
+                                    <div class="truncate pr-2">
+                                        <span class="font-bold text-emerald-900">${t.ref}</span>
+                                        <span class="text-[10px] text-emerald-700 block truncate">${t.fileName}</span>
+                                    </div>
+                                    <button onclick="removeArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-white hover:bg-red-500 text-red-500 hover:text-white border border-emerald-200 flex items-center justify-center shrink-0 transition" title="Eliminar ticket">
+                                        <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                           </div>`
+                        : `<p class="text-[11px] text-slate-400 text-center py-2">Aún no has subido tickets para este evento.</p>`}
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function traducirErrorFirebase(code) {
