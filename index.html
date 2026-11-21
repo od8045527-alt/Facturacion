@@ -11,6 +11,9 @@
 </head>
 <body class="antialiased text-slate-800">
 
+    <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
     <!-- =====================================================================
          SECCIÓN 1: PANTALLA DE INICIO / REGISTRO (3 PERFILES)
     ====================================================================== -->
@@ -48,7 +51,6 @@
 
                     <button type="submit" id="btnLoginSubmit" class="btn-auth">Entrar al Sistema</button>
 
-                    <!-- SEPARADOR Y BOTÓN GOOGLE -->
                     <div class="relative flex py-3 items-center">
                         <div class="flex-grow border-t border-slate-200"></div>
                         <span class="flex-shrink mx-3 text-[11px] text-slate-400">o continúa con</span>
@@ -93,7 +95,6 @@
                         </button>
                     </div>
 
-                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE (3 PERFILES) -->
                     <input type="hidden" id="regRole" value="SUPERVISOR">
                     <div class="role-segmented-wrapper mt-2 mb-1.5" id="roleCardsGroup">
                         <div class="role-glider" id="roleGlider"></div>
@@ -111,7 +112,6 @@
                         </button>
                     </div>
 
-                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL -->
                     <div id="roleDescBanner" class="role-desc-banner mb-2">
                         <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
                         <span id="roleDescText">Sube planeación de eventos, asigna precios y programa fechas.</span>
@@ -151,10 +151,10 @@
     <!-- =====================================================================
          SECCIÓN 2: CONTENEDOR PRINCIPAL DEL SISTEMA (3 PANTALLAS POR PERFIL)
     ====================================================================== -->
-    <div id="appShell" class="hidden min-h-screen bg-slate-100 pb-14 fade-in-screen">
+    <div id="appShell" class="hidden min-h-screen bg-slate-100 pb-24 fade-in-screen">
         
-        <!-- HEADER COMÚN CON SELECTOR DE VISTA RÁPIDA -->
-        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8">
+        <!-- HEADER COMÚN CON CAMPANA DE NOTIFICACIONES Y SELECTOR DE PANTALLA -->
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8 relative z-30">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
                     <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-lg">
@@ -172,6 +172,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Selector de Pantalla -->
                     <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
                         <select id="screenSwitcher" onchange="switchProfileScreen(this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
@@ -181,6 +182,23 @@
                         </select>
                     </div>
 
+                    <!-- BOTÓN CAMPANA DE NOTIFICACIONES -->
+                    <div class="relative">
+                        <button onclick="toggleNotifPanel()" id="notifBellBtn" title="Notificaciones del Equipo" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition relative">
+                            <i class="fa-solid fa-bell text-xs"></i>
+                            <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">0</span>
+                        </button>
+
+                        <!-- DROPDOWN PANEL DE NOTIFICACIONES -->
+                        <div id="notifDropdown" class="hidden absolute right-0 mt-2.5 w-80 sm:w-96 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 modal-pop">
+                            <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+                                <span class="text-xs font-bold"><i class="fa-solid fa-bell text-blue-400 mr-1.5"></i>Centro de Notificaciones</span>
+                                <button onclick="markAllNotificationsRead()" class="text-[10px] text-blue-300 hover:text-white font-semibold">Marcar leídas</button>
+                            </div>
+                            <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
+                        </div>
+                    </div>
+
                     <button onclick="logout()" title="Cerrar Sesión" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-red-500/80 flex items-center justify-center transition">
                         <i class="fa-solid fa-right-from-bracket text-xs"></i>
                     </button>
@@ -188,13 +206,12 @@
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6">
+        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 relative z-10">
 
             <!-- ===============================================================
                  PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y PROGRAMACIÓN)
             ================================================================ -->
             <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
-                <!-- KPIs Supervisor -->
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                         <span class="text-xs font-medium text-slate-400">Eventos Programados</span>
@@ -202,14 +219,14 @@
                         <p class="text-[11px] text-blue-600 mt-0.5">Planeación activa</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Con Tickets Subidos</span>
+                        <span class="text-xs font-medium text-slate-400">Total Tickets Subidos</span>
                         <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
-                        <p class="text-[11px] text-amber-600 mt-0.5">Listos para facturar</p>
+                        <p class="text-[11px] text-amber-600 mt-0.5">Comprobantes cargados</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Facturados</span>
+                        <span class="text-xs font-medium text-slate-400">Total Facturas</span>
                         <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
-                        <p class="text-[11px] text-emerald-600 mt-0.5">Factura cargada</p>
+                        <p class="text-[11px] text-emerald-600 mt-0.5">Listas para descarga</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                         <span class="text-xs font-medium text-slate-400">Presupuesto Planeado</span>
@@ -301,8 +318,8 @@
                                     <th class="py-3 px-3">Tienda y Fechas</th>
                                     <th class="py-3 px-3">Contratado</th>
                                     <th class="py-3 px-3">Precio</th>
-                                    <th class="py-3 px-3">Tickets / Factura</th>
-                                    <th class="py-3 px-3 text-right">Eliminar</th>
+                                    <th class="py-3 px-3">Tickets / Facturas</th>
+                                    <th class="py-3 px-3 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="supEventsTable" class="divide-y divide-slate-100 text-xs"></tbody>
@@ -312,7 +329,7 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 2: EJECUTIVO (6 PORTALES DE FACTURACIÓN + WHATSAPP + FACTURAS)
+                 PANTALLA 2: EJECUTIVO (6 PORTALES DE FACTURACIÓN + WHATSAPP + MÚLTIPLES FACTURAS)
             ================================================================ -->
             <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
                 
@@ -437,7 +454,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp y Facturas</h3>
-                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, revisa tickets y sube las facturas finales</p>
+                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, descarga múltiples tickets y sube varias facturas</p>
                         </div>
                         <select id="ejFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -451,21 +468,19 @@
                         </select>
                     </div>
 
-                    <div id="ejecutivoEventsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <!-- Tarjetas dinámicas para Ejecutivo -->
-                    </div>
+                    <div id="ejecutivoEventsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
                 </section>
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 3: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE TICKETS)
+                 PANTALLA 3: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE MÚLTIPLES TICKETS)
             ================================================================ -->
             <div id="viewContratado" class="hidden space-y-6 fade-in-screen">
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Mis Eventos Asignados & Carga de Tickets</h2>
-                            <p class="text-xs text-slate-400">Revisa la planeación y sube la foto o PDF de tus tickets para que el Ejecutivo genere la factura</p>
+                            <p class="text-xs text-slate-400">Revisa la planeación y sube todos los tickets necesarios para que el Ejecutivo genere las facturas</p>
                         </div>
                         <select id="conFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -479,9 +494,7 @@
                         </select>
                     </div>
 
-                    <div id="contratadoEventsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <!-- Tarjetas dinámicas para Persona Contratada -->
-                    </div>
+                    <div id="contratadoEventsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
                 </section>
             </div>
 
@@ -489,31 +502,124 @@
     </div>
 
     <!-- =====================================================================
-         MODAL PARA SUBIR TICKET (CONTRATADO) O FACTURA (EJECUTIVO)
+         MODAL 1: VENTANA EMERGENTE MEJORADA PARA SUBIR MÚLTIPLES TICKETS / FACTURAS
     ====================================================================== -->
-    <div id="uploadModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
-            <div class="flex justify-between items-center mb-3">
-                <h3 id="uploadModalTitle" class="text-lg font-bold text-slate-900">Subir Archivo</h3>
-                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <div id="uploadModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[30px] max-w-lg w-full overflow-hidden shadow-2xl modal-pop border border-slate-100">
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="uploadModalIcon" class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center text-base">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div>
+                        <h3 id="uploadModalTitle" class="text-base font-bold">Subir Archivos</h3>
+                        <p id="uploadModalSubtitle" class="text-[11px] text-blue-200">Puedes seleccionar uno o varios archivos a la vez</p>
+                    </div>
+                </div>
+                <button onclick="closeUploadModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <p id="uploadModalDesc" class="text-xs text-slate-500 mb-4">Selecciona el documento o imagen correspondiente.</p>
 
-            <form id="uploadForm" class="space-y-3">
+            <form id="uploadForm" class="p-6 space-y-4">
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Folio / Nota / Referencia</label>
-                    <input type="text" id="uploadRefInput" required placeholder="Ej. Ticket #4589 o Factura A-102" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                    <label class="text-xs font-semibold text-slate-700">Referencia / Folio General</label>
+                    <input type="text" id="uploadRefInput" required placeholder="Ej. Ticket #4589 o Factura F-102" class="w-full mt-1.5 p-3 bg-slate-100 rounded-xl text-xs font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
                 </div>
+
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Seleccionar Archivo (Imagen o PDF)</label>
-                    <input type="file" id="uploadFileInput" accept="image/*,.pdf" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs">
+                    <label class="text-xs font-semibold text-slate-700 block mb-1.5">Seleccionar Archivos (Imágenes o PDF • Máx. 700 KB c/u)</label>
+                    <label for="uploadFileInput" class="dropzone-box">
+                        <i class="fa-solid fa-file-circle-plus text-2xl text-blue-600 mb-1.5"></i>
+                        <span class="text-xs font-bold text-slate-800">Haz clic para elegir uno o varios archivos</span>
+                        <span id="selectedFilesCount" class="text-[11px] text-slate-400 mt-0.5">Ningún archivo seleccionado aún</span>
+                        <input type="file" id="uploadFileInput" accept="image/*,.pdf,.xml" multiple required class="hidden" onchange="updateSelectedFilesPreview(this)">
+                    </label>
                 </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                    <button type="submit" id="btnConfirmUpload" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">Subir y Guardar</button>
+
+                <div class="pt-2 flex justify-end gap-2.5">
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition">Cancelar</button>
+                    <button type="submit" id="btnConfirmUpload" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>Agregar Archivos</span>
+                    </button>
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: VENTANA EMERGENTE DE CONFIRMACIÓN PERSONALIZADA
+    ====================================================================== -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[28px] max-w-sm w-full p-6 shadow-2xl modal-pop text-center">
+            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirmModalTitle" class="text-base font-bold text-slate-900">¿Confirmar eliminación?</h3>
+            <p id="confirmModalText" class="text-xs text-slate-500 mt-1 mb-5">Esta acción no se puede deshacer.</p>
+            <div class="flex gap-2.5 justify-center">
+                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancelar</button>
+                <button type="button" id="confirmModalAcceptBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         BOT DE AYUDA FLOTANTE CON TU IMAGEN (bot-avatar.png)
+    ====================================================================== -->
+    <div class="fixed bottom-5 right-5 z-40">
+        <!-- Ventana del Chat Bot -->
+        <div id="helpBotWindow" class="hidden mb-3 w-80 sm:w-96 bg-white rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden modal-pop">
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white px-4 py-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-full bg-white p-0.5 shadow-md overflow-hidden shrink-0 border-2 border-blue-400">
+                        <img src="bot-avatar.png" alt="Asistente ELC" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold">Asistente Operativo ELC</h4>
+                        <span class="text-[10px] text-emerald-300 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> En línea • Guía rápida</span>
+                    </div>
+                </div>
+                <button onclick="toggleHelpBot()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Mensajes del Bot -->
+            <div id="botMessagesArea" class="p-4 h-64 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+                <div class="bot-msg-ai">
+                    ¡Hola! Soy tu asistente del portal <b>Estée Lauder Companies</b>. Selecciona una consulta rápida o escribe tu duda:
+                </div>
+            </div>
+
+            <!-- Preguntas Rápidas -->
+            <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
+                <button type="button" onclick="askBot('supervisor')" class="bot-chip">¿Qué hace Supervisor?</button>
+                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">¿Cómo facturar y mandar WA?</button>
+                <button type="button" onclick="askBot('contratado')" class="bot-chip">Subir varios tickets</button>
+                <button type="button" onclick="askBot('portales')" class="bot-chip">Portales de facturación</button>
+            </div>
+
+            <!-- Input libre -->
+            <form id="botChatForm" class="p-2.5 bg-white border-t border-slate-100 flex gap-2">
+                <input type="text" id="botUserInput" placeholder="Escribe tu pregunta..." class="flex-1 px-3 py-2 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Botón Flotante con tu Robot -->
+        <button onclick="toggleHelpBot()" title="Abrir Asistente de Ayuda" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/20 hover:border-blue-600 transition">
+            <div class="w-12 h-12 rounded-full overflow-hidden bg-sky-100 shrink-0 shadow-inner">
+                <img src="bot-avatar.png" alt="Bot de Ayuda" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+            </div>
+            <div class="text-left">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 leading-none">¿Necesitas ayuda?</span>
+                <span class="block text-xs font-bold text-slate-900 mt-0.5">Asistente ELC</span>
+            </div>
+        </button>
     </div>
 
     <script>
