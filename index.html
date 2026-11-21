@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estée Lauder Companies | Portal de Planeación, Tickets & Facturación</title>
+    <title>Estée Lauder Companies | Portal Operativo de Eventos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 <body class="antialiased text-slate-800">
 
     <!-- =====================================================================
-         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO CON 3 PERFILES
+         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO (3 PERFILES)
     ====================================================================== -->
     <div id="authScreen" class="auth-wrapper">
         <div class="auth-container" id="authContainer">
@@ -48,6 +48,7 @@
 
                     <button type="submit" id="btnLoginSubmit" class="btn-auth">Entrar al Sistema</button>
 
+                    <!-- SEPARADOR Y BOTÓN GOOGLE -->
                     <div class="relative flex py-3 items-center">
                         <div class="flex-grow border-t border-slate-200"></div>
                         <span class="flex-shrink mx-3 text-[11px] text-slate-400">o continúa con</span>
@@ -73,12 +74,12 @@
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
                     <h1 class="text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
-                    <p class="text-[11px] text-slate-400 mb-2">Selecciona tu perfil en el flujo</p>
+                    <p class="text-[11px] text-slate-400 mb-2">Selecciona tu perfil dentro del flujo</p>
 
                     <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-1.5 mb-2 text-left"></div>
 
                     <div class="input-box !my-1.5">
-                        <input type="text" id="regName" required placeholder="Tu Nombre Completo">
+                        <input type="text" id="regName" required placeholder="Tu nombre completo">
                         <i class="fa-solid fa-user field-icon"></i>
                     </div>
                     <div class="input-box !my-1.5">
@@ -92,12 +93,12 @@
                         </button>
                     </div>
 
-                    <!-- SELECTOR SEGMENTADO DINÁMICO (3 PERFILES) -->
+                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE (3 PERFILES) -->
                     <input type="hidden" id="regRole" value="SUPERVISOR">
                     <div class="role-segmented-wrapper mt-2 mb-1.5" id="roleCardsGroup">
                         <div class="role-glider" id="roleGlider"></div>
                         <button type="button" onclick="selectRoleCard('SUPERVISOR', 0, this)" class="role-seg-btn active">
-                            <i class="fa-solid fa-clipboard-list"></i>
+                            <i class="fa-solid fa-calendar-plus"></i>
                             <span>Supervisor</span>
                         </button>
                         <button type="button" onclick="selectRoleCard('EJECUTIVO', 1, this)" class="role-seg-btn">
@@ -110,12 +111,13 @@
                         </button>
                     </div>
 
+                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL -->
                     <div id="roleDescBanner" class="role-desc-banner mb-2">
                         <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
                         <span id="roleDescText">Sube planeación de eventos, asigna precios y programa fechas.</span>
                     </div>
 
-                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-1">Registrar y Entrar</button>
+                    <button type="submit" id="btnRegSubmit" class="btn-auth mt-1.5">Registrar y Entrar</button>
                 </form>
             </div>
 
@@ -127,7 +129,7 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡Hola, Bienvenido!</h2>
                     <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
-                        Plataforma conectada para Supervisor, Ejecutivo y Personal Contratado.
+                        Plataforma integral para Supervisores, Ejecutivos y Personal Contratado.
                     </p>
                     <button type="button" class="btn-outline-auth" id="registerToggleBtn">Registrar Cuenta</button>
                 </div>
@@ -138,7 +140,7 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡De Vuelta!</h2>
                     <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
-                        ¿Ya tienes cuenta? Regresa para entrar a tu panel operativo.
+                        ¿Ya tienes cuenta asignada? Regresa para ingresar a tu tablero operativo.
                     </p>
                     <button type="button" class="btn-outline-auth" id="loginToggleBtn">Iniciar Sesión</button>
                 </div>
@@ -147,11 +149,11 @@
     </div>
 
     <!-- =====================================================================
-         SECCIÓN 2: CONTENEDOR GENERAL DEL DASHBOARD (3 PANTALLAS POR PERFIL)
+         SECCIÓN 2: CONTENEDOR PRINCIPAL DEL SISTEMA (3 PANTALLAS POR PERFIL)
     ====================================================================== -->
-    <div id="dashboardScreen" class="hidden min-h-screen bg-slate-100 pb-14 fade-in-screen">
+    <div id="appShell" class="hidden min-h-screen bg-slate-100 pb-14 fade-in-screen">
         
-        <!-- HEADER CORPORATIVO COMPARTIDO -->
+        <!-- HEADER COMÚN CON SELECTOR DE VISTA RÁPIDA -->
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
@@ -161,20 +163,18 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h1 class="text-base sm:text-lg font-bold tracking-tight">ESTÉE LAUDER COMPANIES</h1>
-                            <span id="roleBadge" class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-semibold uppercase">Perfil</span>
+                            <span id="headerRoleBadge" class="text-[10px] bg-blue-500/30 border border-blue-400/40 px-2.5 py-0.5 rounded-full font-semibold uppercase">Perfil</span>
                         </div>
                         <p class="text-xs text-blue-200">
-                            <span id="headerSubtitle">Gestión de Eventos</span> • 
-                            <span id="activeUserLabel" class="font-semibold text-white">Usuario</span>
+                            Bienvenido, <span id="activeUserLabel" class="font-semibold text-white">Usuario</span>
                         </p>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <!-- Selector rápido de vista para pruebas o cambio de rol -->
                     <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
-                        <select id="viewSwitcher" onchange="switchProfileView()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                        <select id="screenSwitcher" onchange="switchProfileScreen(this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
                             <option value="SUPERVISOR" class="text-slate-900">Pantalla: Supervisor</option>
                             <option value="EJECUTIVO" class="text-slate-900">Pantalla: Ejecutivo</option>
                             <option value="CONTRATADO" class="text-slate-900">Pantalla: Persona Contratada</option>
@@ -188,316 +188,329 @@
             </div>
         </header>
 
-        <!-- =================================================================
-             PANTALLA A: SUPERVISOR (PLANEACIÓN, PRECIOS Y DESCARGA FACTURAS)
-        ================================================================== -->
-        <main id="screenSupervisor" class="hidden max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
-            <!-- KPIs Supervisor -->
-            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                    <div class="flex items-center justify-between">
+        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6">
+
+            <!-- ===============================================================
+                 PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y PROGRAMACIÓN)
+            ================================================================ -->
+            <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
+                <!-- KPIs Supervisor -->
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
                         <span class="text-xs font-medium text-slate-400">Eventos Programados</span>
-                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-days"></i></span>
+                        <h2 id="supKpiTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
+                        <p class="text-[11px] text-blue-600 mt-0.5">Planeación activa</p>
                     </div>
-                    <h2 id="supKpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Planeación activa</p>
-                </div>
+                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                        <span class="text-xs font-medium text-slate-400">Con Tickets Subidos</span>
+                        <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
+                        <p class="text-[11px] text-amber-600 mt-0.5">Listos para facturar</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                        <span class="text-xs font-medium text-slate-400">Facturados</span>
+                        <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
+                        <p class="text-[11px] text-emerald-600 mt-0.5">Factura cargada</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
+                        <span class="text-xs font-medium text-slate-400">Presupuesto Planeado</span>
+                        <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-1">$0</h2>
+                        <p class="text-[11px] text-slate-400 mt-0.5">MXN autorizado</p>
+                    </div>
+                </section>
 
-                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-amber-600">Tickets Subidos</span>
-                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
-                    </div>
-                    <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Cargados por contratados</p>
-                </div>
-
-                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-emerald-600">Facturas Listas</span>
-                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-arrow-down"></i></span>
-                    </div>
-                    <h2 id="supKpiInvoices" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Disponibles para descarga</p>
-                </div>
-
-                <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-indigo-600">Presupuesto Planeado</span>
-                        <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
-                    </div>
-                    <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Total con IVA MXN</p>
-                </div>
-            </section>
-
-            <!-- Barra de Acción Supervisor -->
-            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900">Planeación de Eventos & Control de Precios</h3>
-                        <p class="text-xs text-slate-400">Programa eventos, asigna personal y descarga las facturas subidas por el Ejecutivo</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        <button onclick="exportCargosAmex()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-2xl shadow transition flex items-center gap-2">
-                            <i class="fa-solid fa-file-excel"></i>
-                            <span>Exportar Tabla AMEX</span>
-                        </button>
-                        <button onclick="openPlanModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-blue-600/25 transition transform hover:-translate-y-0.5 flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-plus"></i>
-                            <span>Programar Evento</span>
+                <!-- Formulario Programar Evento / Subir Planeación -->
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i>Programar Nuevo Evento & Planeación</h2>
+                            <p class="text-xs text-slate-400">Sube fechas, precios, detalles de planeación y asigna a la persona contratada</p>
+                        </div>
+                        <button onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel"></i> Exportar Planeación
                         </button>
                     </div>
-                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
-                                <th class="py-3 px-3">Folio / Marca</th>
-                                <th class="py-3 px-3">Fecha / Tienda / Servicio</th>
-                                <th class="py-3 px-3">Persona Contratada</th>
-                                <th class="py-3 px-3">Precio Planeado</th>
-                                <th class="py-3 px-3">Estado Flujo</th>
-                                <th class="py-3 px-3 text-right">Factura / Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="supTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-
-        <!-- =================================================================
-             PANTALLA B: EJECUTIVO (VERIFICA, PORTAL COSTCO, SUBE FACTURAS Y WHATSAPP)
-        ================================================================== -->
-        <main id="screenEjecutivo" class="hidden max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
-            
-            <!-- TARJETA DE PORTALES DE FACTURACIÓN (COSTCO) -->
-            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-5 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 mb-1">
-                        <i class="fa-solid fa-link"></i> Portales de Facturación Directa
-                    </span>
-                    <h3 class="text-sm font-bold text-slate-900">Plataformas para emitir facturas con los tickets subidos</h3>
-                    <p class="text-xs text-slate-400">Abre el portal correspondiente para generar la factura y súbela al evento</p>
-                </div>
-
-                <!-- BOTÓN CON IMAGEN DE COSTCO -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <a href="https://www3.costco.com.mx/facturacion?srsltid=AYCX9vIj9oW1nPU5yuF8kEVgwG67u_MLtSJK32p4ENMnYMxfx-CEjxJu" 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       class="portal-brand-btn group">
-                        <div class="h-10 px-3 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden">
-                            <!-- Logo oficial Costco SVG de alta nitidez -->
-                            <svg class="h-7 w-auto" viewBox="0 0 260 72" xmlns="http://www.w3.org/2000/svg">
-                                <text x="8" y="42" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="44" fill="#E31837" letter-spacing="-1">COSTCO</text>
-                                <rect x="8" y="49" width="76" height="4.5" fill="#005DAA"/>
-                                <rect x="8" y="56" width="76" height="4.5" fill="#005DAA"/>
-                                <rect x="8" y="63" width="76" height="4.5" fill="#005DAA"/>
-                                <text x="90" y="66" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-style="italic" font-size="18.5" fill="#005DAA" letter-spacing="0.5">WHOLESALE</text>
-                            </svg>
+                    <form id="supervisorEventForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">Marca</label>
+                            <select id="supBrand" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="Estée Lauder">Estée Lauder</option>
+                                <option value="Clinique">Clinique</option>
+                                <option value="La Mer">La Mer</option>
+                                <option value="Fragancias">Fragancias</option>
+                                <option value="Kilian">Kilian</option>
+                                <option value="Le Labo">Le Labo</option>
+                                <option value="Tom Ford">Tom Ford</option>
+                            </select>
                         </div>
-                        <div class="text-left pr-2">
-                            <span class="block text-xs font-bold text-slate-900 group-hover:text-blue-700 transition">Facturación Costco</span>
-                            <span class="block text-[10px] text-slate-400">Abrir portal oficial <i class="fa-solid fa-arrow-up-right-from-square ml-0.5"></i></span>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">Tienda / Cadena</label>
+                            <input type="text" id="supStore" required placeholder="Ej. Costco / Walmart / Liverpool / PH" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                    </a>
-                </div>
-            </section>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">Fechas Programadas</label>
+                            <input type="text" id="supDates" required placeholder="Ej. 21 al 23 Nov 2026" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
 
-            <!-- TABLA DEL EJECUTIVO -->
-            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp & Carga de Facturas</h3>
-                        <p class="text-xs text-slate-400">Envía los detalles por WhatsApp al contratado, revisa su ticket y sube la factura final</p>
-                    </div>
-                    <select id="ejFilterBrand" onchange="renderApp()" class="bg-slate-100 text-xs font-medium px-3.5 py-2 rounded-xl border-none outline-none cursor-pointer">
-                        <option value="ALL">Todas las marcas</option>
-                        <option value="Estée Lauder">Estée Lauder</option>
-                        <option value="Clinique">Clinique</option>
-                        <option value="La Mer">La Mer</option>
-                        <option value="Le Labo">Le Labo</option>
-                        <option value="MAC Cosmetics">MAC Cosmetics</option>
-                    </select>
-                </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">Precio / Presupuesto Autorizado (MXN)</label>
+                            <input type="number" step="0.01" id="supPrice" required placeholder="Ej. 14500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">Persona Contratada (Nombre)</label>
+                            <input type="text" id="supContractorName" required placeholder="Ej. Valeria Gómez" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600">WhatsApp Persona Contratada (10 dígitos)</label>
+                            <input type="tel" id="supContractorPhone" required placeholder="Ej. 5512345678" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
-                                <th class="py-3 px-3">Folio / Marca</th>
-                                <th class="py-3 px-3">Planeación Supervisor</th>
-                                <th class="py-3 px-3">Contratado & WhatsApp</th>
-                                <th class="py-3 px-3">Ticket Contratado</th>
-                                <th class="py-3 px-3">Factura Subida</th>
-                                <th class="py-3 px-3 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ejTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-semibold text-slate-600">Detalles de Planeación / Conceptos y Precios Desglosados</label>
+                            <textarea id="supPlanDetails" rows="2" required placeholder="Indica horarios, actividades, materiales a comprar y desglose de precios..." class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
 
-        <!-- =================================================================
-             PANTALLA C: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE TICKETS)
-        ================================================================== -->
-        <main id="screenContratado" class="hidden max-w-5xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 fade-in-screen">
-            <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900">Mis Eventos Asignados & Carga de Tickets</h3>
-                        <p class="text-xs text-slate-400">Consulta tu evento programado y sube la foto o PDF de tus tickets para facturación</p>
-                    </div>
-                    <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
-                        <i class="fa-solid fa-camera mr-1"></i> Sube tickets claros para el Ejecutivo
-                    </span>
-                </div>
+                        <div class="md:col-span-3 flex justify-end">
+                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition">
+                                <i class="fa-solid fa-paper-plane mr-1.5"></i>Guardar y Publicar Planeación
+                            </button>
+                        </div>
+                    </form>
+                </section>
 
-                <div id="contratadoCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Tarjetas dinámicas para Persona Contratada -->
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- =====================================================================
-         MODAL SUPERVISOR: PROGRAMAR EVENTO Y PRECIOS
-    ====================================================================== -->
-    <div id="planModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl modal-pop max-h-[92vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Programar Evento (Planeación)</h3>
-                    <p class="text-[11px] text-slate-400">Define tienda, fecha, precios y persona contratada</p>
-                </div>
-                <button onclick="closePlanModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="planForm" class="space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Marca</label>
-                        <select id="plBrand" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-medium outline-none">
+                <!-- Tabla de Seguimiento Supervisor -->
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="text-base font-bold text-slate-900">Eventos Programados</h3>
+                        <select id="supFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
+                            <option value="ALL">Todas las marcas (7)</option>
                             <option value="Estée Lauder">Estée Lauder</option>
                             <option value="Clinique">Clinique</option>
                             <option value="La Mer">La Mer</option>
+                            <option value="Fragancias">Fragancias</option>
+                            <option value="Kilian">Kilian</option>
                             <option value="Le Labo">Le Labo</option>
-                            <option value="MAC Cosmetics">MAC Cosmetics</option>
+                            <option value="Tom Ford">Tom Ford</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Fecha(s) Programada(s)</label>
-                        <input type="text" id="plDates" required placeholder="Ej. 22 y 23 Nov 2026" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
+                                    <th class="py-3 px-3">Folio / Marca</th>
+                                    <th class="py-3 px-3">Tienda y Fechas</th>
+                                    <th class="py-3 px-3">Contratado</th>
+                                    <th class="py-3 px-3">Precio</th>
+                                    <th class="py-3 px-3">Tickets / Factura</th>
+                                    <th class="py-3 px-3 text-right">Eliminar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supEventsTable" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
                     </div>
-                </div>
+                </section>
+            </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Tienda / Punto de Venta</label>
-                        <input type="text" id="plStore" required placeholder="Ej. Costco Satélite / PH Polanco" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+            <!-- ===============================================================
+                 PANTALLA 2: EJECUTIVO (6 PORTALES DE FACTURACIÓN + WHATSAPP + FACTURAS)
+            ================================================================ -->
+            <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
+                
+                <!-- PANEL DE PLATAFORMAS DE FACTURACIÓN (6 CADENAS) -->
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">Acceso Directo</span>
+                            <h2 class="text-base font-bold text-slate-900 mt-1">Portales de Facturación Electrónica</h2>
+                            <p class="text-xs text-slate-400">Selecciona la cadena donde se generó el ticket para emitir la factura</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Servicio / Actividad</label>
-                        <input type="text" id="plService" required placeholder="Ej. Activación Fin de Semana" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Persona Contratada (Nombre)</label>
-                        <input type="text" id="plContractorName" required placeholder="Ej. Valeria Ramírez" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">WhatsApp Contratado (10 dígitos)</label>
-                        <input type="tel" id="plContractorPhone" required placeholder="Ej. 5512345678" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                    </div>
-                </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                        <!-- 1. COSTCO -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-white">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <text x="160" y="62" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="60" fill="#E31837" letter-spacing="-2">COSTCO</text>
+                                    <rect x="28" y="72" width="62" height="6" fill="#005DAA"/>
+                                    <rect x="28" y="83" width="62" height="6" fill="#005DAA"/>
+                                    <text x="195" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-style="italic" font-size="22" fill="#005DAA" letter-spacing="1">WHOLESALE</text>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Costco</span>
+                            <a href="https://www3.costco.com.mx/facturacion?srsltid=AYCX9vIj9oW1nPU5yuF8kEVgwG67u_MLtSJK32p4ENMnYMxfx-CEjxJu" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#005DAA] hover:bg-[#004480]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Cantidad de Eventos</label>
-                        <input type="number" id="plCount" value="1" min="1" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600">Precio Autorizado antes IVA ($)</label>
-                        <input type="number" step="0.01" id="plSubtotal" oninput="calcPlanPreview()" required placeholder="Ej. 12500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none">
-                    </div>
-                </div>
+                        <!-- 2. WALMART -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-[#0071DC]">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <text x="128" y="68" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="44" fill="#FFFFFF" letter-spacing="-1">Walmart</text>
+                                    <g transform="translate(256, 54)" stroke="#FFC220" stroke-width="8" stroke-linecap="round">
+                                        <line x1="0" y1="-26" x2="0" y2="-12"/>
+                                        <line x1="0" y1="12" x2="0" y2="26"/>
+                                        <line x1="-22" y1="-13" x2="-10" y2="-6"/>
+                                        <line x1="10" y1="6" x2="22" y2="13"/>
+                                        <line x1="-22" y1="13" x2="-10" y2="6"/>
+                                        <line x1="10" y1="-6" x2="22" y2="-13"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Walmart</span>
+                            <a href="https://facturacion-clientes.walmart.com/" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#0071DC] hover:bg-[#005bb5]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
 
-                <div class="p-3 bg-blue-50 border border-blue-100 rounded-2xl flex justify-between text-xs text-blue-950">
-                    <span>IVA (16%): <strong id="plPreviewIva">$0.00</strong></span>
-                    <span>Total Final: <strong id="plPreviewTotal" class="text-blue-700">$0.00</strong></span>
-                </div>
+                        <!-- 3. LA COMER -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-white">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <text x="115" y="72" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="56" fill="#7AB800" letter-spacing="-1">laComer</text>
+                                    <circle cx="258" cy="55" r="34" fill="#F26522"/>
+                                    <path d="M242,46 C255,34 275,38 272,50 C268,62 246,66 240,56 Z" fill="#FFFFFF"/>
+                                    <path d="M266,52 C276,62 274,78 260,84 L268,54 Z" fill="#FFFFFF"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">La Comer</span>
+                            <a href="https://www.lacomer.com.mx/emision-cfdiwebangular/#/lacomer" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#F26522] hover:bg-[#d95314]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
 
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closePlanModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Guardar Planeación</button>
-                </div>
-            </form>
-        </div>
+                        <!-- 4. SORIANA -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-white">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <path d="M138,14 C112,18 106,48 124,62 C136,72 154,68 152,54 C150,42 136,36 144,20 Z" fill="#B5BD00"/>
+                                    <path d="M164,22 C184,22 192,44 176,58 C168,64 164,68 164,74 C160,62 152,52 152,38 C152,28 156,22 164,22 Z" fill="#E31837"/>
+                                    <text x="160" y="102" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-style="italic" font-size="34" fill="#E31837">Soriana</text>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Soriana</span>
+                            <a href="https://www.soriana.com/facturacion-login?srsltid=AYCX9vLs48bsy6Z8-G2P4srPVyomtBdcuQ_maM5gOC4HHfOu6ghhcCWj" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#E31837] hover:bg-[#bd122c]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+
+                        <!-- 5. LIVERPOOL -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-[#E10098]">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <g transform="translate(22, 26)" fill="none" stroke="#FFFFFF" stroke-width="4.5">
+                                        <rect x="0" y="0" width="54" height="54" rx="4"/>
+                                        <polyline points="10,0 10,44 54,44"/>
+                                        <polyline points="20,0 20,34 54,34"/>
+                                        <polyline points="30,0 30,24 54,24"/>
+                                    </g>
+                                    <text x="200" y="68" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="500" font-size="44" fill="#FFFFFF" letter-spacing="-1">Liverpool</text>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Liverpool</span>
+                            <a href="https://facturacionclientes.liverpool.com.mx/inicio/&uid=liverpool" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#E10098] hover:bg-[#b8007c]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+
+                        <!-- 6. PALACIO DE HIERRO -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-[#F2B728]">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <text x="160" y="42" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="22" fill="#18181B">El</text>
+                                    <text x="160" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="bold" font-size="30" fill="#18181B">Palacio de Hierro</text>
+                                    <line x1="36" y1="80" x2="284" y2="80" stroke="#18181B" stroke-width="2"/>
+                                    <text x="160" y="96" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="11" fill="#18181B" letter-spacing="1">SOY TOTALMENTE PALACIO</text>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Palacio de Hierro</span>
+                            <a href="https://palaciodehierro.cfdinova.com.mx/PortalFacturacionPH/" target="_blank" rel="noopener noreferrer" class="portal-btn bg-slate-900 hover:bg-slate-800">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TABLERO DEL EJECUTIVO -->
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp y Facturas</h3>
+                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, revisa tickets y sube las facturas finales</p>
+                        </div>
+                        <select id="ejFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
+                            <option value="ALL">Todas las marcas (7)</option>
+                            <option value="Estée Lauder">Estée Lauder</option>
+                            <option value="Clinique">Clinique</option>
+                            <option value="La Mer">La Mer</option>
+                            <option value="Fragancias">Fragancias</option>
+                            <option value="Kilian">Kilian</option>
+                            <option value="Le Labo">Le Labo</option>
+                            <option value="Tom Ford">Tom Ford</option>
+                        </select>
+                    </div>
+
+                    <div id="ejecutivoEventsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Tarjetas dinámicas para Ejecutivo -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- ===============================================================
+                 PANTALLA 3: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE TICKETS)
+            ================================================================ -->
+            <div id="viewContratado" class="hidden space-y-6 fade-in-screen">
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Mis Eventos Asignados & Carga de Tickets</h2>
+                            <p class="text-xs text-slate-400">Revisa la planeación y sube la foto o PDF de tus tickets para que el Ejecutivo genere la factura</p>
+                        </div>
+                        <select id="conFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
+                            <option value="ALL">Todas las marcas (7)</option>
+                            <option value="Estée Lauder">Estée Lauder</option>
+                            <option value="Clinique">Clinique</option>
+                            <option value="La Mer">La Mer</option>
+                            <option value="Fragancias">Fragancias</option>
+                            <option value="Kilian">Kilian</option>
+                            <option value="Le Labo">Le Labo</option>
+                            <option value="Tom Ford">Tom Ford</option>
+                        </select>
+                    </div>
+
+                    <div id="contratadoEventsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Tarjetas dinámicas para Persona Contratada -->
+                    </div>
+                </section>
+            </div>
+
+        </main>
     </div>
 
     <!-- =====================================================================
-         MODAL EJECUTIVO: SUBIR FACTURA PARA DESCARGA DEL SUPERVISOR
+         MODAL PARA SUBIR TICKET (CONTRATADO) O FACTURA (EJECUTIVO)
     ====================================================================== -->
-    <div id="invoiceModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="uploadModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Subir Factura del Evento</h3>
-                    <p id="invModalSub" class="text-xs text-slate-400">Folio ELC-000</p>
-                </div>
-                <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="uploadModalTitle" class="text-lg font-bold text-slate-900">Subir Archivo</h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="invoiceUploadForm" class="space-y-3.5">
-                <div>
-                    <label class="text-xs font-semibold text-slate-600">Folio de Factura / Cotización</label>
-                    <input type="text" id="invFolioInput" required placeholder="Ej. FAC-COSTCO-8921" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-600">Archivo de Factura (PDF o Imagen)</label>
-                    <input type="file" id="invFileInput" accept=".pdf,image/*" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
-                    <p class="text-[10px] text-slate-400 mt-1">El Supervisor podrá descargar este archivo directamente desde su tablero.</p>
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                    <button type="submit" id="btnSaveInvoice" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700">Subir Factura</button>
-                </div>
-            </form>
-        </div>
-    </div>
+            <p id="uploadModalDesc" class="text-xs text-slate-500 mb-4">Selecciona el documento o imagen correspondiente.</p>
 
-    <!-- =====================================================================
-         MODAL CONTRATADO: SUBIR TICKET PARA EL EJECUTIVO
-    ====================================================================== -->
-    <div id="ticketModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-pop">
-            <div class="flex justify-between items-center mb-4">
+            <form id="uploadForm" class="space-y-3">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-900">Subir Ticket de Compra</h3>
-                    <p id="tktModalSub" class="text-xs text-slate-400">Folio ELC-000</p>
-                </div>
-                <button onclick="closeTicketModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="ticketUploadForm" class="space-y-3.5">
-                <div>
-                    <label class="text-xs font-semibold text-slate-600">Monto del Ticket ($ MXN)</label>
-                    <input type="number" step="0.01" id="tktAmountInput" required placeholder="Ej. 3450.50" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
+                    <label class="text-xs font-semibold text-slate-600">Folio / Nota / Referencia</label>
+                    <input type="text" id="uploadRefInput" required placeholder="Ej. Ticket #4589 o Factura A-102" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Notas / Datos del Ticket (Folio ticket, sucursal)</label>
-                    <input type="text" id="tktNotesInput" required placeholder="Ej. Ticket Costco #44120 - Insumos evento" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-600">Foto o PDF del Ticket</label>
-                    <input type="file" id="tktFileInput" accept="image/*,.pdf" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                    <label class="text-xs font-semibold text-slate-600">Seleccionar Archivo (Imagen o PDF)</label>
+                    <input type="file" id="uploadFileInput" accept="image/*,.pdf" required class="w-full mt-1 p-2 bg-slate-100 rounded-xl text-xs">
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeTicketModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
-                    <button type="submit" id="btnSaveTicket" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700">Enviar Ticket al Ejecutivo</button>
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" id="btnConfirmUpload" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">Subir y Guardar</button>
                 </div>
             </form>
         </div>
@@ -505,9 +518,9 @@
 
     <script>
         const ROLE_DESCRIPTIONS = {
-            'SUPERVISOR': 'Sube planeación de eventos, asigna precios y descarga facturas.',
+            'SUPERVISOR': 'Sube planeación de eventos, asigna precios y programa fechas.',
             'EJECUTIVO': 'Verifica planeación, manda WhatsApp y sube facturas.',
-            'CONTRATADO': 'Consulta sus eventos asignados y sube tickets de compra.'
+            'CONTRATADO': 'Consulta eventos asignados y sube tickets para facturar.'
         };
 
         function selectRoleCard(roleValue, index, clickedBtn) {
