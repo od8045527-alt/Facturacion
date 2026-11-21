@@ -12,7 +12,7 @@
 <body class="antialiased text-slate-800">
 
     <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
-    <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+    <div id="toastContainer" class="fixed top-5 right-5 z-[110] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
     <!-- =====================================================================
          SECCIÓN 1: PANTALLA DE INICIO / REGISTRO (3 PERFILES)
@@ -153,8 +153,8 @@
     ====================================================================== -->
     <div id="appShell" class="hidden min-h-screen bg-slate-100 pb-24 fade-in-screen">
         
-        <!-- HEADER COMÚN CON CAMPANA DE NOTIFICACIONES Y SELECTOR DE PANTALLA -->
-        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-16 pt-5 px-4 sm:px-8 relative z-30">
+        <!-- HEADER COMÚN (z-10 para que las tarjetas KPI floten limpiamente encima) -->
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-20 pt-5 px-4 sm:px-8 relative z-10">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
                     <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-lg">
@@ -171,7 +171,7 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2.5">
+                <div class="flex flex-wrap items-center gap-2.5 relative z-30">
                     <!-- Selector de Pantalla -->
                     <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
@@ -184,7 +184,7 @@
 
                     <!-- BOTÓN CAMPANA DE NOTIFICACIONES -->
                     <div class="relative">
-                        <button onclick="toggleNotifPanel()" id="notifBellBtn" title="Notificaciones del Equipo" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition relative">
+                        <button type="button" onclick="toggleNotifPanel()" id="notifBellBtn" title="Notificaciones del Equipo" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition relative">
                             <i class="fa-solid fa-bell text-xs"></i>
                             <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">0</span>
                         </button>
@@ -193,45 +193,58 @@
                         <div id="notifDropdown" class="hidden absolute right-0 mt-2.5 w-80 sm:w-96 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 modal-pop">
                             <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
                                 <span class="text-xs font-bold"><i class="fa-solid fa-bell text-blue-400 mr-1.5"></i>Centro de Notificaciones</span>
-                                <button onclick="markAllNotificationsRead()" class="text-[10px] text-blue-300 hover:text-white font-semibold">Marcar leídas</button>
+                                <button type="button" onclick="markAllNotificationsRead()" class="text-[10px] text-blue-300 hover:text-white font-semibold">Marcar leídas</button>
                             </div>
                             <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
                         </div>
                     </div>
 
-                    <button onclick="logout()" title="Cerrar Sesión" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-red-500/80 flex items-center justify-center transition">
+                    <button type="button" onclick="logout()" title="Cerrar Sesión" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-red-500/80 flex items-center justify-center transition">
                         <i class="fa-solid fa-right-from-bracket text-xs"></i>
                     </button>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-10 space-y-6 relative z-10">
+        <!-- MAIN CON z-20 PARA QUE LAS TARJETAS FLOTEN POR ENCIMA DEL HEADER -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-12 space-y-6 relative z-20">
 
             <!-- ===============================================================
                  PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y PROGRAMACIÓN)
             ================================================================ -->
             <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Eventos Programados</span>
-                        <h2 id="supKpiTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
-                        <p class="text-[11px] text-blue-600 mt-0.5">Planeación activa</p>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Eventos Programados</span>
+                            <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-check"></i></span>
+                        </div>
+                        <h2 id="supKpiTotal" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                        <p class="text-[11px] text-blue-600 font-medium mt-0.5">Planeación activa</p>
                     </div>
-                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Total Tickets Subidos</span>
-                        <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
-                        <p class="text-[11px] text-amber-600 mt-0.5">Comprobantes cargados</p>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Total Tickets Subidos</span>
+                            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
+                        </div>
+                        <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                        <p class="text-[11px] text-amber-600 font-medium mt-0.5">Comprobantes cargados</p>
                     </div>
-                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Total Facturas</span>
-                        <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
-                        <p class="text-[11px] text-emerald-600 mt-0.5">Listas para descarga</p>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Total Facturas</span>
+                            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                        </div>
+                        <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Listas para descarga</p>
                     </div>
-                    <div class="bg-white p-5 smooth-card shadow-md border border-slate-100">
-                        <span class="text-xs font-medium text-slate-400">Presupuesto Planeado</span>
-                        <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-1">$0</h2>
-                        <p class="text-[11px] text-slate-400 mt-0.5">MXN autorizado</p>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Presupuesto Planeado</span>
+                            <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
+                        </div>
+                        <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">MXN autorizado</p>
                     </div>
                 </section>
 
@@ -242,7 +255,7 @@
                             <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i>Programar Nuevo Evento & Planeación</h2>
                             <p class="text-xs text-slate-400">Sube fechas, precios, detalles de planeación y asigna a la persona contratada</p>
                         </div>
-                        <button onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                        <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
                             <i class="fa-solid fa-file-excel"></i> Exportar Planeación
                         </button>
                     </div>
@@ -334,7 +347,7 @@
             <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
                 
                 <!-- PANEL DE PLATAFORMAS DE FACTURACIÓN (6 CADENAS) -->
-                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
                             <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">Acceso Directo</span>
@@ -476,7 +489,7 @@
                  PANTALLA 3: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE MÚLTIPLES TICKETS)
             ================================================================ -->
             <div id="viewContratado" class="hidden space-y-6 fade-in-screen">
-                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Mis Eventos Asignados & Carga de Tickets</h2>
@@ -516,7 +529,7 @@
                         <p id="uploadModalSubtitle" class="text-[11px] text-blue-200">Puedes seleccionar uno o varios archivos a la vez</p>
                     </div>
                 </div>
-                <button onclick="closeUploadModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                <button type="button" onclick="closeUploadModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -566,22 +579,32 @@
     </div>
 
     <!-- =====================================================================
-         BOT DE AYUDA FLOTANTE CON TU IMAGEN (bot-avatar.png)
+         BOT DE AYUDA FLOTANTE (CON AVATAR INTEGRADO ESTÉTICO)
     ====================================================================== -->
     <div class="fixed bottom-5 right-5 z-40">
         <!-- Ventana del Chat Bot -->
         <div id="helpBotWindow" class="hidden mb-3 w-80 sm:w-96 bg-white rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden modal-pop">
             <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white px-4 py-3.5 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-10 h-10 rounded-full bg-white p-0.5 shadow-md overflow-hidden shrink-0 border-2 border-blue-400">
-                        <img src="bot-avatar.png" alt="Asistente ELC" class="w-full h-full object-cover rounded-full">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-sky-100 to-blue-100 p-1 shadow-md shrink-0 border-2 border-blue-400 flex items-center justify-center">
+                        <!-- Robot 3D Estético SVG -->
+                        <svg viewBox="0 0 120 120" class="w-full h-full">
+                            <rect x="14" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
+                            <rect x="94" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
+                            <rect x="24" y="24" width="72" height="54" rx="26" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                            <rect x="33" y="34" width="54" height="34" rx="17" fill="#1d4ed8"/>
+                            <path d="M43 52 Q49 44 55 52" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                            <path d="M65 52 Q71 44 77 52" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                            <path d="M40 82 Q60 76 80 82 L74 106 Q60 112 46 106 Z" fill="#f1f5f9"/>
+                            <path d="M47 85 L73 85 L68 100 Q60 104 52 100 Z" fill="#06b6d4"/>
+                        </svg>
                     </div>
                     <div>
                         <h4 class="text-xs font-bold">Asistente Operativo ELC</h4>
                         <span class="text-[10px] text-emerald-300 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> En línea • Guía rápida</span>
                     </div>
                 </div>
-                <button onclick="toggleHelpBot()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs transition">
+                <button type="button" onclick="toggleHelpBot()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -596,7 +619,7 @@
             <!-- Preguntas Rápidas -->
             <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
                 <button type="button" onclick="askBot('supervisor')" class="bot-chip">¿Qué hace Supervisor?</button>
-                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">¿Cómo facturar y mandar WA?</button>
+                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">Facturar y mandar WA</button>
                 <button type="button" onclick="askBot('contratado')" class="bot-chip">Subir varios tickets</button>
                 <button type="button" onclick="askBot('portales')" class="bot-chip">Portales de facturación</button>
             </div>
@@ -610,10 +633,19 @@
             </form>
         </div>
 
-        <!-- Botón Flotante con tu Robot -->
-        <button onclick="toggleHelpBot()" title="Abrir Asistente de Ayuda" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/20 hover:border-blue-600 transition">
-            <div class="w-12 h-12 rounded-full overflow-hidden bg-sky-100 shrink-0 shadow-inner">
-                <img src="bot-avatar.png" alt="Bot de Ayuda" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+        <!-- Botón Flotante Estético -->
+        <button type="button" onclick="toggleHelpBot()" title="Abrir Asistente de Ayuda" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/25 hover:border-blue-600 transition">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-b from-sky-100 to-blue-100 p-1 shrink-0 flex items-center justify-center shadow-inner">
+                <svg viewBox="0 0 120 120" class="w-full h-full group-hover:scale-110 transition-transform duration-300">
+                    <rect x="14" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
+                    <rect x="94" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
+                    <rect x="24" y="24" width="72" height="54" rx="26" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <rect x="33" y="34" width="54" height="34" rx="17" fill="#1d4ed8"/>
+                    <path d="M43 52 Q49 44 55 52" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                    <path d="M65 52 Q71 44 77 52" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+                    <path d="M40 82 Q60 76 80 82 L74 106 Q60 112 46 106 Z" fill="#f1f5f9"/>
+                    <path d="M47 85 L73 85 L68 100 Q60 104 52 100 Z" fill="#06b6d4"/>
+                </svg>
             </div>
             <div class="text-left">
                 <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 leading-none">¿Necesitas ayuda?</span>
@@ -622,6 +654,7 @@
         </button>
     </div>
 
+    <!-- SCRIPT BASE GARANTIZADO (FUNCIONA AL INSTANTE SIN DEPENDER DE MÓDULOS EXTERNOS) -->
     <script>
         const ROLE_DESCRIPTIONS = {
             'SUPERVISOR': 'Sube planeación de eventos, asigna precios y programa fechas.',
@@ -632,10 +665,7 @@
         function selectRoleCard(roleValue, index, clickedBtn) {
             document.getElementById('regRole').value = roleValue;
             document.getElementById('roleGlider').style.transform = `translateX(${index * 100}%)`;
-
-            document.querySelectorAll('#roleCardsGroup .role-seg-btn').forEach(function(btn) {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('#roleCardsGroup .role-seg-btn').forEach(btn => btn.classList.remove('active'));
             clickedBtn.classList.add('active');
 
             const descText = document.getElementById('roleDescText');
@@ -645,6 +675,55 @@
             descText.textContent = ROLE_DESCRIPTIONS[roleValue];
             descBanner.classList.add('banner-pop');
         }
+
+        function toggleHelpBot() {
+            document.getElementById('helpBotWindow').classList.toggle('hidden');
+        }
+
+        const BOT_ANSWERS = {
+            supervisor: '<b>Perfil Supervisor:</b> En tu pantalla puedes programar nuevos eventos, elegir cualquiera de las 7 marcas, definir precios/presupuestos y asignar a la persona contratada con su número de WhatsApp.',
+            ejecutivo: '<b>Perfil Ejecutivo:</b> Verifica la planeación del supervisor, presiona <b>Enviar Planeación</b> para mandar todo por WhatsApp, descarga los tickets subidos y carga una o varias facturas.',
+            contratado: '<b>Perfil Persona Contratada:</b> Consulta tus eventos asignados y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF de tus tickets.',
+            portales: '<b>Portales de Facturación:</b> En la pantalla de <b>Ejecutivo</b> tienes acceso directo con un clic a <b>Costco, Walmart, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.'
+        };
+
+        function askBot(topic) {
+            const area = document.getElementById('botMessagesArea');
+            const titles = {
+                supervisor: '¿Qué hace el perfil Supervisor?',
+                ejecutivo: '¿Cómo facturar y mandar WhatsApp?',
+                contratado: '¿Cómo subir varios tickets?',
+                portales: '¿Dónde están los portales de facturación?'
+            };
+            area.innerHTML += `<div class="bot-msg-user">${titles[topic]}</div>`;
+            setTimeout(() => {
+                area.innerHTML += `<div class="bot-msg-ai">${BOT_ANSWERS[topic]}</div>`;
+                area.scrollTop = area.scrollHeight;
+            }, 200);
+        }
+
+        document.getElementById('botChatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('botUserInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const area = document.getElementById('botMessagesArea');
+            area.innerHTML += `<div class="bot-msg-user">${text}</div>`;
+            input.value = '';
+
+            const lower = text.toLowerCase();
+            let reply = 'Usa el selector superior <b>"Pantalla: ..."</b> para alternar entre Supervisor, Ejecutivo y Persona Contratada. ¿Necesitas ayuda con tickets, facturas, WhatsApp o portales?';
+            if (lower.includes('ticket')) reply = BOT_ANSWERS.contratado;
+            else if (lower.includes('factura') || lower.includes('costco') || lower.includes('walmart') || lower.includes('liverpool') || lower.includes('soriana') || lower.includes('comer') || lower.includes('palacio')) reply = BOT_ANSWERS.portales;
+            else if (lower.includes('whatsapp') || lower.includes('ejecutivo')) reply = BOT_ANSWERS.ejecutivo;
+            else if (lower.includes('supervisor') || lower.includes('planea') || lower.includes('precio')) reply = BOT_ANSWERS.supervisor;
+
+            setTimeout(() => {
+                area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
+                area.scrollTop = area.scrollHeight;
+            }, 220);
+        });
     </script>
     <script type="module" src="app.js"></script>
 </body>
