@@ -43,7 +43,6 @@ body {
     }
 }
 
-/* Cajas de Formulario */
 .form-box {
     position: absolute;
     top: 0;
@@ -92,8 +91,7 @@ body {
     width: 100%;
 }
 
-.input-box input,
-.input-box select {
+.input-box input {
     width: 100%;
     padding: 11px 42px 11px 16px;
     background: #f1f5f9;
@@ -104,11 +102,9 @@ body {
     color: #0f172a;
     font-weight: 500;
     transition: all 0.25s ease;
-    appearance: none;
 }
 
-.input-box input:focus,
-.input-box select:focus {
+.input-box input:focus {
     background: #ffffff;
     border-color: #2563eb;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
@@ -125,8 +121,7 @@ body {
     pointer-events: none;
 }
 
-.input-box input:focus ~ .field-icon,
-.input-box select:focus ~ .field-icon {
+.input-box input:focus ~ .field-icon {
     color: #2563eb;
 }
 
@@ -319,24 +314,57 @@ body {
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
-/* Botón Portal Costco */
-.portal-brand-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 14px 8px 8px;
+/* =========================================================
+   TARJETAS DE PORTALES DE FACTURACIÓN (6 TIENDAS)
+========================================================= */
+.portal-card {
     background: #f8fafc;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 18px;
-    text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.portal-brand-btn:hover {
-    background: #eff6ff;
-    border-color: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.14);
+.portal-card:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    transform: translateY(-4px);
+    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.08);
+}
+
+.portal-logo-box {
+    width: 100%;
+    height: 60px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    overflow: hidden;
+}
+
+.portal-btn {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 11px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.portal-btn:active {
+    transform: scale(0.97);
 }
 
 /* =========================================================
@@ -433,7 +461,7 @@ body {
 }
 
 /* =========================================================
-   ANIMACIONES DEL DASHBOARD Y MODALES
+   ANIMACIONES DEL DASHBOARD Y TARJETAS
 ========================================================= */
 .fade-in-screen {
     animation: screenFade 0.45s ease-out forwards;
