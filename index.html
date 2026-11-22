@@ -11,7 +11,7 @@
 </head>
 <body class="antialiased text-slate-800">
 
-    <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
+    <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES INTERNAS (TOASTS) -->
     <div id="toastContainer" class="fixed top-5 right-5 z-[120] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
     <!-- =====================================================================
@@ -95,7 +95,6 @@
                         </button>
                     </div>
 
-                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE (4 PERFILES) -->
                     <input type="hidden" id="regRole" value="SUPERVISOR">
                     <div class="role-segmented-wrapper mt-2 mb-1.5" id="roleCardsGroup">
                         <div class="role-glider" id="roleGlider"></div>
@@ -117,13 +116,11 @@
                         </button>
                     </div>
 
-                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL -->
                     <div id="roleDescBanner" class="role-desc-banner mb-1.5">
                         <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
                         <span id="roleDescText">Sube planeación de eventos, asigna precios y programa fechas.</span>
                     </div>
 
-                    <!-- CÓDIGO OPCIONAL PARA ADMIN GENERAL -->
                     <div id="adminCodeBox" class="input-box !my-1.5 hidden">
                         <input type="password" id="regAdminCode" placeholder="Código Admin General (ELC-ADMIN)">
                         <i class="fa-solid fa-key field-icon"></i>
@@ -184,6 +181,12 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5 relative z-40">
+                    <!-- BOTÓN ACTIVAR NOTIFICACIONES NATIVAS DE ESCRITORIO / CELULAR -->
+                    <button type="button" onclick="requestDesktopNotifications()" id="btnDesktopPush" title="Recibir notificaciones fuera de la página" class="px-3 py-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-desktop text-blue-300"></i>
+                        <span id="btnDesktopPushLabel">Activar Alertas PC</span>
+                    </button>
+
                     <!-- Selector de Pantalla (4 Perfiles) -->
                     <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
@@ -195,7 +198,7 @@
                         </select>
                     </div>
 
-                    <!-- BOTÓN CAMPANA DE NOTIFICACIONES (ABRE MODAL FLOTANTE) -->
+                    <!-- BOTÓN CAMPANA DE NOTIFICACIONES -->
                     <button type="button" onclick="openNotifModal()" id="notifBellBtn" title="Notificaciones del Equipo" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition relative">
                         <i class="fa-solid fa-bell text-xs"></i>
                         <span id="notifBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[19px] h-[19px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-slate-900">0</span>
@@ -211,7 +214,7 @@
         <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-12 space-y-6 relative z-20">
 
             <!-- ===============================================================
-                 PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y 2 WHATSAPP)
+                 PANTALLA 1: SUPERVISOR
             ================================================================ -->
             <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -249,7 +252,6 @@
                     </div>
                 </section>
 
-                <!-- Formulario Programar Evento / Subir Planeación -->
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
@@ -315,7 +317,6 @@
                     </form>
                 </section>
 
-                <!-- Tabla de Seguimiento Supervisor -->
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h3 class="text-base font-bold text-slate-900">Eventos Programados</h3>
@@ -350,11 +351,9 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 2: EJECUTIVO (7 PORTALES DE FACTURACIÓN + WHATSAPP + FACTURAS)
+                 PANTALLA 2: EJECUTIVO
             ================================================================ -->
             <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
-                
-                <!-- PANEL DE PLATAFORMAS DE FACTURACIÓN (7 CADENAS INCLUYENDO SAM'S CLUB) -->
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
@@ -365,7 +364,6 @@
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                        <!-- 1. COSTCO -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -381,7 +379,6 @@
                             </a>
                         </div>
 
-                        <!-- 2. WALMART -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#0071DC]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -402,7 +399,6 @@
                             </a>
                         </div>
 
-                        <!-- 3. SAM'S CLUB -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#0060A9]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -417,7 +413,6 @@
                             </a>
                         </div>
 
-                        <!-- 4. LA COMER -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -433,7 +428,6 @@
                             </a>
                         </div>
 
-                        <!-- 5. SORIANA -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -448,7 +442,6 @@
                             </a>
                         </div>
 
-                        <!-- 6. LIVERPOOL -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#E10098]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -467,7 +460,6 @@
                             </a>
                         </div>
 
-                        <!-- 7. PALACIO DE HIERRO -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#F2B728]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -485,7 +477,6 @@
                     </div>
                 </section>
 
-                <!-- TABLERO DEL EJECUTIVO -->
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
@@ -509,7 +500,7 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 3: COUNTER MANAGER (CHECA EVENTOS Y SUBE TICKETS)
+                 PANTALLA 3: COUNTER MANAGER
             ================================================================ -->
             <div id="viewCounter" class="hidden space-y-6 fade-in-screen">
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
@@ -535,7 +526,7 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 4: ADMINISTRADOR GENERAL (AUDITORÍA GLOBAL Y CONFIRMACIÓN)
+                 PANTALLA 4: ADMINISTRADOR GENERAL
             ================================================================ -->
             <div id="viewAdminGeneral" class="hidden space-y-6 fade-in-screen">
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -662,7 +653,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 3: SELECTOR DE WHATSAPP (PRINCIPAL VS OCULTO / SECUNDARIO)
+         MODAL 3: SELECTOR DE WHATSAPP
     ====================================================================== -->
     <div id="waSelectModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[65] flex items-center justify-center p-4">
         <div class="bg-white rounded-[28px] max-w-md w-full p-6 shadow-2xl modal-pop">
@@ -698,7 +689,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 5: VENTANA EMERGENTE DE NOTIFICACIONES (POR ENCIMA DE TODO)
+         MODAL 5: VENTANA EMERGENTE DE NOTIFICACIONES
     ====================================================================== -->
     <div id="notifModal" onclick="if(event.target === this) closeNotifModal()" class="hidden fixed inset-0 bg-slate-950/55 backdrop-blur-sm z-[105] flex items-start justify-end p-4 sm:p-6">
         <div class="bg-white text-slate-800 rounded-[28px] w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden modal-pop mt-14 sm:mt-16">
