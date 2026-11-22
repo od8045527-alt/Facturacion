@@ -12,10 +12,10 @@
 <body class="antialiased text-slate-800">
 
     <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
-    <div id="toastContainer" class="fixed top-5 right-5 z-[110] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+    <div id="toastContainer" class="fixed top-5 right-5 z-[120] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
     <!-- =====================================================================
-         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO (3 PERFILES)
+         SECCIÓN 1: PANTALLA DE INICIO / REGISTRO (4 PERFILES)
     ====================================================================== -->
     <div id="authScreen" class="auth-wrapper">
         <div class="auth-container" id="authContainer">
@@ -69,14 +69,14 @@
                 </form>
             </div>
 
-            <!-- FORMULARIO REGISTRO DE USUARIO (3 PERFILES) -->
+            <!-- FORMULARIO REGISTRO DE USUARIO (4 PERFILES) -->
             <div class="form-box register">
                 <form id="registerForm" class="w-full max-w-xs">
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-1.5">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold mb-1">
                         <i class="fa-solid fa-user-plus"></i> Nuevo Acceso
                     </div>
-                    <h1 class="text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
-                    <p class="text-[11px] text-slate-400 mb-2">Selecciona tu perfil dentro del flujo</p>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mb-0.5">Crear Cuenta</h1>
+                    <p class="text-[11px] text-slate-400 mb-2">Selecciona tu perfil operativo</p>
 
                     <div id="regAlert" class="hidden text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-1.5 mb-2 text-left"></div>
 
@@ -95,6 +95,7 @@
                         </button>
                     </div>
 
+                    <!-- SELECTOR SEGMENTADO CON CÁPSULA DESLIZANTE (4 PERFILES) -->
                     <input type="hidden" id="regRole" value="SUPERVISOR">
                     <div class="role-segmented-wrapper mt-2 mb-1.5" id="roleCardsGroup">
                         <div class="role-glider" id="roleGlider"></div>
@@ -106,15 +107,26 @@
                             <i class="fa-solid fa-file-invoice-dollar"></i>
                             <span>Ejecutivo</span>
                         </button>
-                        <button type="button" onclick="selectRoleCard('CONTRATADO', 2, this)" class="role-seg-btn">
+                        <button type="button" onclick="selectRoleCard('COUNTER', 2, this)" class="role-seg-btn">
                             <i class="fa-solid fa-receipt"></i>
-                            <span>Contratado</span>
+                            <span>Counter Mgr</span>
+                        </button>
+                        <button type="button" onclick="selectRoleCard('ADMIN_GENERAL', 3, this)" class="role-seg-btn">
+                            <i class="fa-solid fa-crown"></i>
+                            <span>Admin Gral</span>
                         </button>
                     </div>
 
-                    <div id="roleDescBanner" class="role-desc-banner mb-2">
+                    <!-- DESCRIPCIÓN DINÁMICA DEL ROL -->
+                    <div id="roleDescBanner" class="role-desc-banner mb-1.5">
                         <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
                         <span id="roleDescText">Sube planeación de eventos, asigna precios y programa fechas.</span>
+                    </div>
+
+                    <!-- CÓDIGO OPCIONAL PARA ADMIN GENERAL -->
+                    <div id="adminCodeBox" class="input-box !my-1.5 hidden">
+                        <input type="password" id="regAdminCode" placeholder="Código Admin General (ELC-ADMIN)">
+                        <i class="fa-solid fa-key field-icon"></i>
                     </div>
 
                     <button type="submit" id="btnRegSubmit" class="btn-auth mt-1.5">Registrar y Entrar</button>
@@ -129,7 +141,7 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-bold mb-2">¡Hola, Bienvenido!</h2>
                     <p class="text-xs text-blue-100 mb-6 leading-relaxed max-w-[260px]">
-                        Plataforma integral para Supervisores, Ejecutivos y Personal Contratado.
+                        Plataforma integral para Supervisores, Ejecutivos, Counter Managers y Administración General.
                     </p>
                     <button type="button" class="btn-outline-auth" id="registerToggleBtn">Registrar Cuenta</button>
                 </div>
@@ -149,11 +161,11 @@
     </div>
 
     <!-- =====================================================================
-         SECCIÓN 2: CONTENEDOR PRINCIPAL DEL SISTEMA (3 PANTALLAS POR PERFIL)
+         SECCIÓN 2: CONTENEDOR PRINCIPAL DEL SISTEMA (4 PANTALLAS POR PERFIL)
     ====================================================================== -->
     <div id="appShell" class="hidden min-h-screen bg-slate-100 pb-24 fade-in-screen">
         
-        <!-- HEADER COMÚN (z-10 para que las tarjetas KPI floten limpiamente encima) -->
+        <!-- HEADER COMÚN -->
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-b-[36px] shadow-xl pb-20 pt-5 px-4 sm:px-8 relative z-10">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
@@ -171,31 +183,40 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2.5 relative z-30">
-                    <!-- Selector de Pantalla -->
+                <div class="flex flex-wrap items-center gap-2.5 relative z-40">
+                    <!-- Selector de Pantalla (4 Perfiles) -->
                     <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3.5 py-2 flex items-center gap-2">
                         <i class="fa-solid fa-repeat text-blue-300 text-xs"></i>
                         <select id="screenSwitcher" onchange="switchProfileScreen(this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
                             <option value="SUPERVISOR" class="text-slate-900">Pantalla: Supervisor</option>
                             <option value="EJECUTIVO" class="text-slate-900">Pantalla: Ejecutivo</option>
-                            <option value="CONTRATADO" class="text-slate-900">Pantalla: Persona Contratada</option>
+                            <option value="COUNTER" class="text-slate-900">Pantalla: Counter Manager</option>
+                            <option value="ADMIN_GENERAL" class="text-slate-900">Pantalla: Administrador General</option>
                         </select>
                     </div>
 
-                    <!-- BOTÓN CAMPANA DE NOTIFICACIONES -->
+                    <!-- BOTÓN CAMPANA DE NOTIFICACIONES REDISEÑADO -->
                     <div class="relative">
                         <button type="button" onclick="toggleNotifPanel()" id="notifBellBtn" title="Notificaciones del Equipo" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition relative">
                             <i class="fa-solid fa-bell text-xs"></i>
-                            <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">0</span>
+                            <span id="notifBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[19px] h-[19px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-slate-900">0</span>
                         </button>
 
-                        <!-- DROPDOWN PANEL DE NOTIFICACIONES -->
-                        <div id="notifDropdown" class="hidden absolute right-0 mt-2.5 w-80 sm:w-96 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 modal-pop">
-                            <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
-                                <span class="text-xs font-bold"><i class="fa-solid fa-bell text-blue-400 mr-1.5"></i>Centro de Notificaciones</span>
-                                <button type="button" onclick="markAllNotificationsRead()" class="text-[10px] text-blue-300 hover:text-white font-semibold">Marcar leídas</button>
+                        <!-- PANEL DE NOTIFICACIONES ESTÉTICO -->
+                        <div id="notifDropdown" class="hidden fixed sm:absolute right-4 sm:right-0 top-20 sm:top-12 w-[calc(100vw-2rem)] sm:w-96 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden z-[90] modal-pop">
+                            <div class="px-5 py-3.5 bg-gradient-to-r from-slate-900 to-blue-950 text-white flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center text-xs"><i class="fa-solid fa-bell"></i></span>
+                                    <div>
+                                        <span class="text-xs font-bold block leading-none">Notificaciones</span>
+                                        <span id="notifSubtitleCount" class="text-[10px] text-blue-200">Actividad en tiempo real</span>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="markAllNotificationsRead()" class="text-[11px] bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg font-semibold transition">
+                                    Marcar leídas
+                                </button>
                             </div>
-                            <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
+                            <div id="notifList" class="max-h-80 overflow-y-auto p-2.5 space-y-2 bg-slate-50/70 text-xs"></div>
                         </div>
                     </div>
 
@@ -206,11 +227,10 @@
             </div>
         </header>
 
-        <!-- MAIN CON z-20 PARA QUE LAS TARJETAS FLOTEN POR ENCIMA DEL HEADER -->
         <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-12 space-y-6 relative z-20">
 
             <!-- ===============================================================
-                 PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y PROGRAMACIÓN)
+                 PANTALLA 1: SUPERVISOR (PLANEACIÓN, PRECIOS Y 2 WHATSAPP)
             ================================================================ -->
             <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,7 +244,7 @@
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Total Tickets Subidos</span>
+                            <span class="text-xs font-semibold text-slate-500">Tickets Subidos</span>
                             <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
                         </div>
                         <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
@@ -232,11 +252,11 @@
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Total Facturas</span>
+                            <span class="text-xs font-semibold text-slate-500">Facturas Listas</span>
                             <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
                         </div>
                         <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Listas para descarga</p>
+                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Para descarga</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <div class="flex items-center justify-between">
@@ -253,7 +273,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
                             <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i>Programar Nuevo Evento & Planeación</h2>
-                            <p class="text-xs text-slate-400">Sube fechas, precios, detalles de planeación y asigna a la persona contratada</p>
+                            <p class="text-xs text-slate-400">Sube fechas, precios, detalles y los números de WhatsApp del Counter Manager</p>
                         </div>
                         <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
                             <i class="fa-solid fa-file-excel"></i> Exportar Planeación
@@ -275,7 +295,7 @@
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600">Tienda / Cadena</label>
-                            <input type="text" id="supStore" required placeholder="Ej. Costco / Walmart / Liverpool / PH" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="supStore" required placeholder="Ej. Sam's / Costco / Walmart / Liverpool" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600">Fechas Programadas</label>
@@ -287,12 +307,18 @@
                             <input type="number" step="0.01" id="supPrice" required placeholder="Ej. 14500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="text-xs font-semibold text-slate-600">Persona Contratada (Nombre)</label>
+                            <label class="text-xs font-semibold text-slate-600">Counter Manager (Nombre)</label>
                             <input type="text" id="supContractorName" required placeholder="Ej. Valeria Gómez" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600">WhatsApp Persona Contratada (10 dígitos)</label>
-                            <input type="tel" id="supContractorPhone" required placeholder="Ej. 5512345678" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-600">WhatsApp 1 (Principal)</label>
+                                <input type="tel" id="supContractorPhone" required placeholder="5512345678" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-600">WhatsApp 2 (Opcional)</label>
+                                <input type="tel" id="supContractorPhone2" placeholder="5587654321" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
                         </div>
 
                         <div class="md:col-span-3">
@@ -329,9 +355,10 @@
                                 <tr class="border-b border-slate-100 text-[11px] uppercase text-slate-400">
                                     <th class="py-3 px-3">Folio / Marca</th>
                                     <th class="py-3 px-3">Tienda y Fechas</th>
-                                    <th class="py-3 px-3">Contratado</th>
+                                    <th class="py-3 px-3">Counter Manager</th>
                                     <th class="py-3 px-3">Precio</th>
                                     <th class="py-3 px-3">Tickets / Facturas</th>
+                                    <th class="py-3 px-3">Estado</th>
                                     <th class="py-3 px-3 text-right">Acciones</th>
                                 </tr>
                             </thead>
@@ -342,11 +369,11 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 2: EJECUTIVO (6 PORTALES DE FACTURACIÓN + WHATSAPP + MÚLTIPLES FACTURAS)
+                 PANTALLA 2: EJECUTIVO (7 PORTALES DE FACTURACIÓN + WHATSAPP + FACTURAS)
             ================================================================ -->
             <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
                 
-                <!-- PANEL DE PLATAFORMAS DE FACTURACIÓN (6 CADENAS) -->
+                <!-- PANEL DE PLATAFORMAS DE FACTURACIÓN (7 CADENAS INCLUYENDO SAM'S CLUB) -->
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
@@ -356,7 +383,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                         <!-- 1. COSTCO -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
@@ -394,7 +421,22 @@
                             </a>
                         </div>
 
-                        <!-- 3. LA COMER -->
+                        <!-- 3. SAM'S CLUB -->
+                        <div class="portal-card">
+                            <div class="portal-logo-box bg-[#0060A9]">
+                                <svg viewBox="0 0 320 110" class="w-full h-11">
+                                    <polygon points="160,12 198,50 160,88 122,50" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+                                    <polygon points="176,12 214,50 176,88 138,50" fill="none" stroke="#78BE20" stroke-width="6"/>
+                                    <text x="160" y="104" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="24" fill="#FFFFFF" letter-spacing="0.5">Sam's Club</text>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-slate-800">Sam's Club</span>
+                            <a href="https://facturacion-clientes.walmart.com/" target="_blank" rel="noopener noreferrer" class="portal-btn bg-[#0060A9] hover:bg-[#004982]">
+                                Facturar <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+
+                        <!-- 4. LA COMER -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -410,7 +452,7 @@
                             </a>
                         </div>
 
-                        <!-- 4. SORIANA -->
+                        <!-- 5. SORIANA -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-white">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -425,7 +467,7 @@
                             </a>
                         </div>
 
-                        <!-- 5. LIVERPOOL -->
+                        <!-- 6. LIVERPOOL -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#E10098]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -444,7 +486,7 @@
                             </a>
                         </div>
 
-                        <!-- 6. PALACIO DE HIERRO -->
+                        <!-- 7. PALACIO DE HIERRO -->
                         <div class="portal-card">
                             <div class="portal-logo-box bg-[#F2B728]">
                                 <svg viewBox="0 0 320 110" class="w-full h-11">
@@ -467,7 +509,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp y Facturas</h3>
-                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, descarga múltiples tickets y sube varias facturas</p>
+                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, visualiza/descarga tickets y sube facturas</p>
                         </div>
                         <select id="ejFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -486,14 +528,14 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 3: PERSONA CONTRATADA (CHECA EVENTOS Y SUBE MÚLTIPLES TICKETS)
+                 PANTALLA 3: COUNTER MANAGER (CHECA EVENTOS Y SUBE TICKETS)
             ================================================================ -->
-            <div id="viewContratado" class="hidden space-y-6 fade-in-screen">
+            <div id="viewCounter" class="hidden space-y-6 fade-in-screen">
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Mis Eventos Asignados & Carga de Tickets</h2>
-                            <p class="text-xs text-slate-400">Revisa la planeación y sube todos los tickets necesarios para que el Ejecutivo genere las facturas</p>
+                            <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Counter Manager • Eventos Asignados & Tickets</h2>
+                            <p class="text-xs text-slate-400">Revisa la planeación, visualiza tus comprobantes y sube todos los tickets para facturación</p>
                         </div>
                         <select id="conFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -507,7 +549,61 @@
                         </select>
                     </div>
 
-                    <div id="contratadoEventsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
+                    <div id="counterEventsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
+                </section>
+            </div>
+
+            <!-- ===============================================================
+                 PANTALLA 4: ADMINISTRADOR GENERAL (AUDITORÍA GLOBAL Y CONFIRMACIÓN)
+            ================================================================ -->
+            <div id="viewAdminGeneral" class="hidden space-y-6 fade-in-screen">
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <span class="text-xs font-semibold text-slate-500">Total Eventos ELC</span>
+                        <h2 id="admKpiTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h2>
+                        <p class="text-[11px] text-blue-600 font-medium mt-0.5">Todas las marcas</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <span class="text-xs font-semibold text-slate-500">Pendientes Confirmar</span>
+                        <h2 id="admKpiPending" class="text-2xl font-bold text-amber-600 mt-1">0</h2>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Requieren visto bueno</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <span class="text-xs font-semibold text-slate-500">Confirmados</span>
+                        <h2 id="admKpiConfirmed" class="text-2xl font-bold text-emerald-600 mt-1">0</h2>
+                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Validados por Admin Gral.</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <span class="text-xs font-semibold text-slate-500">Monto Global</span>
+                        <h2 id="admKpiBudget" class="text-2xl font-bold text-slate-900 mt-1">$0</h2>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">MXN acumulado</p>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-crown text-blue-600 mr-2"></i>Administrador General • Auditoría y Confirmación</h2>
+                            <p class="text-xs text-slate-400">Supervisa todos los movimientos, visualiza tickets y facturas, y confirma cada expediente</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> Exportar Todo
+                            </button>
+                            <select id="admFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
+                                <option value="ALL">Todas las marcas (7)</option>
+                                <option value="Estée Lauder">Estée Lauder</option>
+                                <option value="Clinique">Clinique</option>
+                                <option value="La Mer">La Mer</option>
+                                <option value="Fragancias">Fragancias</option>
+                                <option value="Kilian">Kilian</option>
+                                <option value="Le Labo">Le Labo</option>
+                                <option value="Tom Ford">Tom Ford</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="adminGeneralGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
                 </section>
             </div>
 
@@ -515,13 +611,13 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 1: VENTANA EMERGENTE MEJORADA PARA SUBIR MÚLTIPLES TICKETS / FACTURAS
+         MODAL 1: SUBIR MÚLTIPLES TICKETS / FACTURAS
     ====================================================================== -->
     <div id="uploadModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-[30px] max-w-lg w-full overflow-hidden shadow-2xl modal-pop border border-slate-100">
             <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 px-6 py-4 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div id="uploadModalIcon" class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center text-base">
+                    <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center text-base">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                     </div>
                     <div>
@@ -562,32 +658,74 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 2: VENTANA EMERGENTE DE CONFIRMACIÓN PERSONALIZADA
+         MODAL 2: VISOR DE TICKETS Y FACTURAS EN PANTALLA
     ====================================================================== -->
-    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-[28px] max-w-sm w-full p-6 shadow-2xl modal-pop text-center">
-            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto mb-3">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+    <div id="previewModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[30px] max-w-3xl w-full overflow-hidden shadow-2xl modal-pop border border-slate-200 flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 px-6 py-4 text-white flex items-center justify-between shrink-0">
+                <div>
+                    <span id="previewBadge" class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-500/30 text-blue-200">Documento</span>
+                    <h3 id="previewTitle" class="text-sm sm:text-base font-bold mt-1">Vista Previa</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="previewDownloadBtn" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-download"></i> Descargar
+                    </button>
+                    <button type="button" onclick="closePreviewModal()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             </div>
-            <h3 id="confirmModalTitle" class="text-base font-bold text-slate-900">¿Confirmar eliminación?</h3>
-            <p id="confirmModalText" class="text-xs text-slate-500 mt-1 mb-5">Esta acción no se puede deshacer.</p>
-            <div class="flex gap-2.5 justify-center">
-                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancelar</button>
-                <button type="button" id="confirmModalAcceptBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition">Sí, Eliminar</button>
+            <div id="previewContentArea" class="p-4 bg-slate-100 overflow-auto flex-1 flex items-center justify-center min-h-[340px]">
+                <!-- Imagen o PDF embebido -->
             </div>
         </div>
     </div>
 
     <!-- =====================================================================
-         BOT DE AYUDA FLOTANTE (CON AVATAR INTEGRADO ESTÉTICO)
+         MODAL 3: SELECTOR DE WHATSAPP (PRINCIPAL VS OCULTO / SECUNDARIO)
+    ====================================================================== -->
+    <div id="waSelectModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[65] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[28px] max-w-md w-full p-6 shadow-2xl modal-pop">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">¿A qué WhatsApp enviamos?</h3>
+                    <p id="waModalSubtitle" class="text-xs text-slate-500">El Counter Manager tiene dos números registrados</p>
+                </div>
+            </div>
+            <div id="waOptionsList" class="space-y-2.5 my-4"></div>
+            <button type="button" onclick="closeWaSelectModal()" class="w-full py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: CONFIRMACIÓN PERSONALIZADA
+    ====================================================================== -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[80] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[28px] max-w-sm w-full p-6 shadow-2xl modal-pop text-center">
+            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirmModalTitle" class="text-base font-bold text-slate-900">¿Confirmar acción?</h3>
+            <p id="confirmModalText" class="text-xs text-slate-500 mt-1 mb-5">Esta acción no se puede deshacer.</p>
+            <div class="flex gap-2.5 justify-center">
+                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancelar</button>
+                <button type="button" id="confirmModalAcceptBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         BOT DE AYUDA FLOTANTE
     ====================================================================== -->
     <div class="fixed bottom-5 right-5 z-40">
-        <!-- Ventana del Chat Bot -->
         <div id="helpBotWindow" class="hidden mb-3 w-80 sm:w-96 bg-white rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden modal-pop">
             <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white px-4 py-3.5 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-b from-sky-100 to-blue-100 p-1 shadow-md shrink-0 border-2 border-blue-400 flex items-center justify-center">
-                        <!-- Robot 3D Estético SVG -->
                         <svg viewBox="0 0 120 120" class="w-full h-full">
                             <rect x="14" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
                             <rect x="94" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
@@ -609,22 +747,19 @@
                 </button>
             </div>
 
-            <!-- Mensajes del Bot -->
             <div id="botMessagesArea" class="p-4 h-64 overflow-y-auto space-y-3 bg-slate-50 text-xs">
                 <div class="bot-msg-ai">
                     ¡Hola! Soy tu asistente del portal <b>Estée Lauder Companies</b>. Selecciona una consulta rápida o escribe tu duda:
                 </div>
             </div>
 
-            <!-- Preguntas Rápidas -->
             <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
-                <button type="button" onclick="askBot('supervisor')" class="bot-chip">¿Qué hace Supervisor?</button>
-                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">Facturar y mandar WA</button>
-                <button type="button" onclick="askBot('contratado')" class="bot-chip">Subir varios tickets</button>
-                <button type="button" onclick="askBot('portales')" class="bot-chip">Portales de facturación</button>
+                <button type="button" onclick="askBot('supervisor')" class="bot-chip">Supervisor</button>
+                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">Ejecutivo y WA</button>
+                <button type="button" onclick="askBot('counter')" class="bot-chip">Counter Manager</button>
+                <button type="button" onclick="askBot('admin')" class="bot-chip">Admin General</button>
             </div>
 
-            <!-- Input libre -->
             <form id="botChatForm" class="p-2.5 bg-white border-t border-slate-100 flex gap-2">
                 <input type="text" id="botUserInput" placeholder="Escribe tu pregunta..." class="flex-1 px-3 py-2 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                 <button type="submit" class="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
@@ -633,7 +768,6 @@
             </form>
         </div>
 
-        <!-- Botón Flotante Estético -->
         <button type="button" onclick="toggleHelpBot()" title="Abrir Asistente de Ayuda" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/25 hover:border-blue-600 transition">
             <div class="w-11 h-11 rounded-full bg-gradient-to-b from-sky-100 to-blue-100 p-1 shrink-0 flex items-center justify-center shadow-inner">
                 <svg viewBox="0 0 120 120" class="w-full h-full group-hover:scale-110 transition-transform duration-300">
@@ -654,12 +788,12 @@
         </button>
     </div>
 
-    <!-- SCRIPT BASE GARANTIZADO (FUNCIONA AL INSTANTE SIN DEPENDER DE MÓDULOS EXTERNOS) -->
     <script>
         const ROLE_DESCRIPTIONS = {
             'SUPERVISOR': 'Sube planeación de eventos, asigna precios y programa fechas.',
             'EJECUTIVO': 'Verifica planeación, manda WhatsApp y sube facturas.',
-            'CONTRATADO': 'Consulta eventos asignados y sube tickets para facturar.'
+            'COUNTER': 'Counter Manager: consulta eventos y sube múltiples tickets.',
+            'ADMIN_GENERAL': 'Administrador General: visualiza todos los movimientos y confirma.'
         };
 
         function selectRoleCard(roleValue, index, clickedBtn) {
@@ -674,6 +808,8 @@
             void descBanner.offsetWidth;
             descText.textContent = ROLE_DESCRIPTIONS[roleValue];
             descBanner.classList.add('banner-pop');
+
+            document.getElementById('adminCodeBox').classList.toggle('hidden', roleValue !== 'ADMIN_GENERAL');
         }
 
         function toggleHelpBot() {
@@ -681,19 +817,19 @@
         }
 
         const BOT_ANSWERS = {
-            supervisor: '<b>Perfil Supervisor:</b> En tu pantalla puedes programar nuevos eventos, elegir cualquiera de las 7 marcas, definir precios/presupuestos y asignar a la persona contratada con su número de WhatsApp.',
-            ejecutivo: '<b>Perfil Ejecutivo:</b> Verifica la planeación del supervisor, presiona <b>Enviar Planeación</b> para mandar todo por WhatsApp, descarga los tickets subidos y carga una o varias facturas.',
-            contratado: '<b>Perfil Persona Contratada:</b> Consulta tus eventos asignados y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF de tus tickets.',
-            portales: '<b>Portales de Facturación:</b> En la pantalla de <b>Ejecutivo</b> tienes acceso directo con un clic a <b>Costco, Walmart, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.'
+            supervisor: '<b>Perfil Supervisor:</b> Programa eventos, define presupuestos y registra el WhatsApp 1 y WhatsApp 2 (secundario/oculto) del Counter Manager.',
+            ejecutivo: '<b>Perfil Ejecutivo:</b> Envía la planeación por WhatsApp (eligiendo cuál número usar si hay 2), factura en <b>Costco, Walmart, Sam\'s Club, La Comer, Soriana, Liverpool y Palacio de Hierro</b>, y sube múltiples facturas.',
+            counter: '<b>Perfil Counter Manager:</b> Consulta tus eventos asignados, visualiza los comprobantes y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF.',
+            admin: '<b>Administrador General:</b> Supervisa en tiempo real todos los movimientos de las 7 marcas, previsualiza tickets y facturas, y otorga la <b>Confirmación Final</b>.'
         };
 
         function askBot(topic) {
             const area = document.getElementById('botMessagesArea');
             const titles = {
-                supervisor: '¿Qué hace el perfil Supervisor?',
+                supervisor: '¿Qué hace el Supervisor?',
                 ejecutivo: '¿Cómo facturar y mandar WhatsApp?',
-                contratado: '¿Cómo subir varios tickets?',
-                portales: '¿Dónde están los portales de facturación?'
+                counter: '¿Qué hace el Counter Manager?',
+                admin: '¿Qué hace el Administrador General?'
             };
             area.innerHTML += `<div class="bot-msg-user">${titles[topic]}</div>`;
             setTimeout(() => {
@@ -713,11 +849,11 @@
             input.value = '';
 
             const lower = text.toLowerCase();
-            let reply = 'Usa el selector superior <b>"Pantalla: ..."</b> para alternar entre Supervisor, Ejecutivo y Persona Contratada. ¿Necesitas ayuda con tickets, facturas, WhatsApp o portales?';
-            if (lower.includes('ticket')) reply = BOT_ANSWERS.contratado;
-            else if (lower.includes('factura') || lower.includes('costco') || lower.includes('walmart') || lower.includes('liverpool') || lower.includes('soriana') || lower.includes('comer') || lower.includes('palacio')) reply = BOT_ANSWERS.portales;
-            else if (lower.includes('whatsapp') || lower.includes('ejecutivo')) reply = BOT_ANSWERS.ejecutivo;
-            else if (lower.includes('supervisor') || lower.includes('planea') || lower.includes('precio')) reply = BOT_ANSWERS.supervisor;
+            let reply = 'Usa el selector superior <b>"Pantalla: ..."</b> para cambiar entre Supervisor, Ejecutivo, Counter Manager y Administrador General.';
+            if (lower.includes('ticket') || lower.includes('counter')) reply = BOT_ANSWERS.counter;
+            else if (lower.includes('factura') || lower.includes('sam') || lower.includes('costco') || lower.includes('walmart') || lower.includes('whatsapp')) reply = BOT_ANSWERS.ejecutivo;
+            else if (lower.includes('admin') || lower.includes('confirm')) reply = BOT_ANSWERS.admin;
+            else if (lower.includes('supervisor') || lower.includes('planea')) reply = BOT_ANSWERS.supervisor;
 
             setTimeout(() => {
                 area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
