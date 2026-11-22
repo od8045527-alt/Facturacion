@@ -284,14 +284,18 @@ window.logout = async () => {
 };
 
 // =========================================================
-// 4. CENTRO DE NOTIFICACIONES REDISEÑADO
+// 4. CENTRO DE NOTIFICACIONES + VENTANAS EMERGENTES EN VIVO
 // =========================================================
+let isInitialNotifLoad = true;
+const shownToastIds = new Set();
+
 async function pushSystemNotification(title, message, category = 'INFO') {
     await addDoc(collection(db, "notificaciones_elc"), {
         title,
         message,
         category,
         author: currentUser.display,
+        authorEmail: currentUser.email,
         read: false,
         creadoEn: new Date().toISOString()
     });
@@ -299,9 +303,28 @@ async function pushSystemNotification(title, message, category = 'INFO') {
 
 function listenNotifications() {
     if (unsubscribeNotifs) unsubscribeNotifs();
+    isInitialNotifLoad = true;
     const q = query(collection(db, "notificaciones_elc"), orderBy("creadoEn", "desc"), limit(25));
+
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         notificationsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        if (!isInitialNotifLoad) {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const data = change.doc.data();
+                    if (!shownToastIds.has(change.doc.id) && data.authorEmail !== currentUser.email) {
+                        shownToastIds.add(change.doc.id);
+                        const toastType = data.category === 'CONFIRM' ? 'success' : 'info';
+                        window.showToast(`🔔 ${data.title}`, `${data.message} (Por ${data.author || 'Equipo'})`, toastType);
+                    }
+                }
+            });
+        } else {
+            snapshot.docs.forEach(d => shownToastIds.add(d.id));
+            isInitialNotifLoad = false;
+        }
+
         renderNotifications();
     });
 }
@@ -314,7 +337,7 @@ function renderNotifications() {
     if (unread.length > 0) {
         badge.textContent = unread.length;
         badge.classList.remove('hidden');
-        subCount.textContent = `${unread.length} sin leer`;
+        subCount.textContent = `${unread.length} notificación(es) sin leer`;
     } else {
         badge.classList.add('hidden');
         subCount.textContent = 'Todo al día';
@@ -322,7 +345,7 @@ function renderNotifications() {
 
     const listEl = document.getElementById('notifList');
     if (notificationsList.length === 0) {
-        listEl.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white rounded-2xl">Sin notificaciones recientes.</div>`;
+        listEl.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">Sin notificaciones recientes.</div>`;
         return;
     }
 
@@ -337,8 +360,8 @@ function renderNotifications() {
     listEl.innerHTML = notificationsList.map(n => {
         const st = catStyles[n.category] || catStyles.INFO;
         return `
-            <div onclick="markSingleNotifRead('${n.id}')" class="p-3 rounded-2xl border ${n.read ? 'bg-white border-slate-100' : 'bg-blue-50/80 border-blue-200 shadow-sm'} flex items-start gap-3 cursor-pointer hover:bg-slate-50 transition">
-                <div class="w-8 h-8 rounded-xl ${st.bg} ${st.text} flex items-center justify-center shrink-0 text-xs mt-0.5">
+            <div onclick="markSingleNotifRead('${n.id}')" class="p-3.5 rounded-2xl border ${n.read ? 'bg-white border-slate-100' : 'bg-blue-50/90 border-blue-200 shadow-sm'} flex items-start gap-3 cursor-pointer hover:bg-slate-50 transition">
+                <div class="w-9 h-9 rounded-xl ${st.bg} ${st.text} flex items-center justify-center shrink-0 text-xs mt-0.5">
                     <i class="fa-solid ${st.icon}"></i>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -354,8 +377,12 @@ function renderNotifications() {
     }).join('');
 }
 
-window.toggleNotifPanel = () => {
-    document.getElementById('notifDropdown').classList.toggle('hidden');
+window.openNotifModal = () => {
+    document.getElementById('notifModal').classList.remove('hidden');
+};
+
+window.closeNotifModal = () => {
+    document.getElementById('notifModal').classList.add('hidden');
 };
 
 window.markSingleNotifRead = async (notifId) => {
@@ -367,6 +394,7 @@ window.markAllNotificationsRead = async () => {
     for (const item of unread) {
         await updateDoc(doc(db, "notificaciones_elc", item.id), { read: true });
     }
+    window.showToast('Notificaciones al día', 'Todas las notificaciones se marcaron como leídas.', 'success');
 };
 
 // =========================================================
