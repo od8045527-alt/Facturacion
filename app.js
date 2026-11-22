@@ -43,6 +43,80 @@ const googleProvider = new GoogleAuthProvider();
 const ADMIN_GENERAL_CODE = 'ELC-ADMIN';
 
 // =========================================================
+// 0. REGISTRO DE SERVICE WORKER & NOTIFICACIONES NATIVAS (WINDOWS / MÓVIL)
+// =========================================================
+let swRegistration = null;
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+        .then(reg => { swRegistration = reg; })
+        .catch(err => console.warn('SW no registrado:', err));
+}
+
+function updateDesktopPushButtonState() {
+    const btn = document.getElementById('btnDesktopPush');
+    const label = document.getElementById('btnDesktopPushLabel');
+    if (!btn || !label) return;
+
+    if (!('Notification' in window)) {
+        btn.classList.add('hidden');
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        label.textContent = 'Alertas PC Activas';
+        btn.classList.remove('bg-white/10');
+        btn.classList.add('bg-emerald-500/25', 'border-emerald-400/40', 'text-emerald-200');
+    } else if (Notification.permission === 'denied') {
+        label.textContent = 'Alertas Bloqueadas';
+    } else {
+        label.textContent = 'Activar Alertas PC';
+    }
+}
+
+window.requestDesktopNotifications = async () => {
+    if (!('Notification' in window)) {
+        window.showToast('No compatible', 'Tu navegador no soporta notificaciones de escritorio.', 'warning');
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        triggerNativeOSNotification('Alertas Activas • Portal ELC', 'Recibirás avisos en tu pantalla incluso cuando estés fuera de la página.');
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+    updateDesktopPushButtonState();
+
+    if (permission === 'granted') {
+        window.showToast('Alertas Activadas', 'Ahora recibirás notificaciones de escritorio aunque minimices el navegador.', 'success');
+        triggerNativeOSNotification('¡Alertas Activadas!', 'Portal Operativo Estée Lauder Companies conectado.');
+    } else {
+        window.showToast('Permiso denegado', 'Habilita las notificaciones en el candado junto a la barra de direcciones del navegador.', 'warning');
+    }
+};
+
+function triggerNativeOSNotification(title, bodyText) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const options = {
+        body: bodyText,
+        tag: 'elc-portal-' + Date.now(),
+        requireInteraction: false
+    };
+
+    if (swRegistration && swRegistration.showNotification) {
+        swRegistration.showNotification(title, options);
+    } else {
+        const notif = new Notification(title, options);
+        notif.onclick = () => {
+            window.focus();
+            notif.close();
+        };
+    }
+}
+
+// =========================================================
 // 1. SISTEMA DE NOTIFICACIONES TOAST & MODALES
 // =========================================================
 window.showToast = (title, message, type = 'info') => {
@@ -268,6 +342,7 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('appShell').classList.remove('hidden');
         document.getElementById('activeUserLabel').textContent = currentUser.display;
 
+        updateDesktopPushButtonState();
         window.switchProfileScreen(currentUser.role);
         listenFirestoreEvents();
         listenNotifications();
@@ -284,7 +359,7 @@ window.logout = async () => {
 };
 
 // =========================================================
-// 4. CENTRO DE NOTIFICACIONES + VENTANAS EMERGENTES EN VIVO
+// 4. CENTRO DE NOTIFICACIONES + ALERTAS EXTERNAS EN VIVO
 // =========================================================
 let isInitialNotifLoad = true;
 const shownToastIds = new Set();
@@ -316,7 +391,10 @@ function listenNotifications() {
                     if (!shownToastIds.has(change.doc.id) && data.authorEmail !== currentUser.email) {
                         shownToastIds.add(change.doc.id);
                         const toastType = data.category === 'CONFIRM' ? 'success' : 'info';
-                        window.showToast(`🔔 ${data.title}`, `${data.message} (Por ${data.author || 'Equipo'})`, toastType);
+                        const fullBody = `${data.message} (Por ${data.author || 'Equipo'})`;
+
+                        window.showToast(`🔔 ${data.title}`, fullBody, toastType);
+                        triggerNativeOSNotification(`ELC • ${data.title}`, fullBody);
                     }
                 }
             });
@@ -665,7 +743,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     }
 });
 
-// VISOR EN PANTALLA (IMAGEN O PDF)
 window.previewArrayFile = (docId, type, itemId) => {
     const ev = eventsList.find(item => item.docId === docId);
     if (!ev) return;
@@ -745,7 +822,6 @@ window.removeArrayFile = (docId, type, itemId) => {
     );
 };
 
-// CONFIRMACIÓN POR ADMINISTRADOR GENERAL
 window.toggleAdminConfirmation = async (docId, confirmState) => {
     const ev = eventsList.find(item => item.docId === docId);
     if (!ev) return;
@@ -818,7 +894,6 @@ window.renderAllViews = () => {
     renderAdminGeneralView();
 };
 
-// RENDER 1: SUPERVISOR
 function renderSupervisorView() {
     const brandFilter = document.getElementById('supFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -884,7 +959,6 @@ function renderSupervisorView() {
     }).join('');
 }
 
-// RENDER 2: EJECUTIVO
 function renderEjecutivoView() {
     const brandFilter = document.getElementById('ejFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -934,7 +1008,6 @@ function renderEjecutivoView() {
                     </button>
                 </div>
 
-                <!-- TICKETS (CON VISOR + DESCARGA) Y FACTURAS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-100 space-y-2">
                         <span class="text-[11px] font-bold text-amber-900 block"><i class="fa-solid fa-receipt mr-1"></i>Tickets (${tickets.length})</span>
@@ -991,7 +1064,6 @@ function renderEjecutivoView() {
     }).join('');
 }
 
-// RENDER 3: COUNTER MANAGER
 function renderCounterView() {
     const brandFilter = document.getElementById('conFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -1062,7 +1134,6 @@ function renderCounterView() {
     }).join('');
 }
 
-// RENDER 4: ADMINISTRADOR GENERAL (AUDITORÍA Y CONFIRMACIÓN)
 function renderAdminGeneralView() {
     const brandFilter = document.getElementById('admFilterBrand').value;
     const list = eventsList.filter(e => brandFilter === 'ALL' || e.brand === brandFilter);
@@ -1104,7 +1175,6 @@ function renderAdminGeneralView() {
                     ${ev.planDetails}
                 </div>
 
-                <!-- VISOR DIRECTO DE TODOS LOS TICKETS Y FACTURAS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="p-3 rounded-2xl bg-amber-50/60 border border-amber-100 space-y-1.5">
                         <span class="text-[11px] font-bold text-amber-900 block"><i class="fa-solid fa-receipt mr-1"></i>Tickets (${tickets.length})</span>
@@ -1137,7 +1207,6 @@ function renderAdminGeneralView() {
                     </div>
                 </div>
 
-                <!-- BARRA DE CONFIRMACIÓN DEL ADMINISTRADOR GENERAL -->
                 <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                     ${ev.adminConfirmed
                         ? `<span class="text-xs font-bold text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>Confirmado por ${ev.adminConfirmedBy || 'Admin General'}</span>
