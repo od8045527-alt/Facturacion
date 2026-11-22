@@ -386,7 +386,7 @@ body {
     background: #ffffff;
     border-radius: 18px;
     padding: 12px 14px;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
     border: 1px solid #e2e8f0;
     display: flex;
     align-items: flex-start;
