@@ -717,7 +717,7 @@
     </div>
 
     <!-- =====================================================================
-         BOT DE AYUDA FLOTANTE
+         BOT DE AYUDA CON IA FLOTANTE
     ====================================================================== -->
     <div class="fixed bottom-5 right-5 z-40">
         <div id="helpBotWindow" class="hidden mb-3 w-80 sm:w-96 bg-white rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden modal-pop">
@@ -736,8 +736,11 @@
                         </svg>
                     </div>
                     <div>
-                        <h4 class="text-xs font-bold">Asistente Operativo ELC</h4>
-                        <span class="text-[10px] text-emerald-300 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> En línea • Guía rápida</span>
+                        <h4 class="text-xs font-bold flex items-center gap-1.5">
+                            Asistente IA • ELC
+                            <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/40 text-blue-100">Gemini</span>
+                        </h4>
+                        <span class="text-[10px] text-emerald-300 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> En línea • Consulta eventos o dudas</span>
                     </div>
                 </div>
                 <button type="button" onclick="toggleHelpBot()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs transition">
@@ -747,26 +750,26 @@
 
             <div id="botMessagesArea" class="p-4 h-64 overflow-y-auto space-y-3 bg-slate-50 text-xs">
                 <div class="bot-msg-ai">
-                    ¡Hola! Soy tu asistente del portal <b>Estée Lauder Companies</b>. Selecciona una consulta rápida o escribe tu duda:
+                    ¡Hola! Soy tu asistente con IA de <b>Estée Lauder Companies</b>. Puedes preguntarme sobre el estado de los eventos, tickets, facturas o procesos de cada perfil:
                 </div>
             </div>
 
             <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
-                <button type="button" onclick="askBot('supervisor')" class="bot-chip">Supervisor</button>
-                <button type="button" onclick="askBot('ejecutivo')" class="bot-chip">Ejecutivo y WA</button>
-                <button type="button" onclick="askBot('counter')" class="bot-chip">Counter Manager</button>
-                <button type="button" onclick="askBot('admin')" class="bot-chip">Admin General</button>
+                <button type="button" onclick="askBot('¿Qué eventos tienen tickets pendientes de facturar?')" class="bot-chip">Pendientes de factura</button>
+                <button type="button" onclick="askBot('¿Cómo envío la planeación por WhatsApp?')" class="bot-chip">Enviar WhatsApp</button>
+                <button type="button" onclick="askBot('¿Qué portales de facturación hay disponibles?')" class="bot-chip">Portales</button>
+                <button type="button" onclick="askBot('Dame un resumen general de los eventos activos')" class="bot-chip">Resumen IA</button>
             </div>
 
             <form id="botChatForm" class="p-2.5 bg-white border-t border-slate-100 flex gap-2">
-                <input type="text" id="botUserInput" placeholder="Escribe tu pregunta..." class="flex-1 px-3 py-2 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="submit" class="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
+                <input type="text" id="botUserInput" placeholder="Pregúntale a la IA..." class="flex-1 px-3 py-2 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="botSendBtn" class="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition">
                     <i class="fa-solid fa-paper-plane text-xs"></i>
                 </button>
             </form>
         </div>
 
-        <button type="button" onclick="toggleHelpBot()" title="Abrir Asistente de Ayuda" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/25 hover:border-blue-600 transition">
+        <button type="button" onclick="toggleHelpBot()" title="Abrir Asistente IA" class="bot-float-btn ml-auto group relative flex items-center gap-2.5 bg-white p-1.5 pr-4 rounded-full shadow-2xl border-2 border-blue-600/25 hover:border-blue-600 transition">
             <div class="w-11 h-11 rounded-full bg-gradient-to-b from-sky-100 to-blue-100 p-1 shrink-0 flex items-center justify-center shadow-inner">
                 <svg viewBox="0 0 120 120" class="w-full h-full group-hover:scale-110 transition-transform duration-300">
                     <rect x="14" y="36" width="12" height="28" rx="6" fill="#06b6d4"/>
@@ -780,8 +783,8 @@
                 </svg>
             </div>
             <div class="text-left">
-                <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 leading-none">¿Necesitas ayuda?</span>
-                <span class="block text-xs font-bold text-slate-900 mt-0.5">Asistente ELC</span>
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 leading-none">Asistente IA</span>
+                <span class="block text-xs font-bold text-slate-900 mt-0.5">Ayuda ELC</span>
             </div>
         </button>
     </div>
@@ -813,51 +816,6 @@
         function toggleHelpBot() {
             document.getElementById('helpBotWindow').classList.toggle('hidden');
         }
-
-        const BOT_ANSWERS = {
-            supervisor: '<b>Perfil Supervisor:</b> Programa eventos, define presupuestos y registra el WhatsApp 1 y WhatsApp 2 (secundario/oculto) del Counter Manager.',
-            ejecutivo: '<b>Perfil Ejecutivo:</b> Envía la planeación por WhatsApp (eligiendo cuál número usar si hay 2), factura en <b>Costco, Walmart, Sam\'s Club, La Comer, Soriana, Liverpool y Palacio de Hierro</b>, y sube múltiples facturas.',
-            counter: '<b>Perfil Counter Manager:</b> Consulta tus eventos asignados, visualiza los comprobantes y presiona <b>+ Agregar Tickets</b> para subir una o varias fotos/PDF.',
-            admin: '<b>Administrador General:</b> Supervisa en tiempo real todos los movimientos de las 7 marcas, previsualiza tickets y facturas, y otorga la <b>Confirmación Final</b>.'
-        };
-
-        function askBot(topic) {
-            const area = document.getElementById('botMessagesArea');
-            const titles = {
-                supervisor: '¿Qué hace el Supervisor?',
-                ejecutivo: '¿Cómo facturar y mandar WhatsApp?',
-                counter: '¿Qué hace el Counter Manager?',
-                admin: '¿Qué hace el Administrador General?'
-            };
-            area.innerHTML += `<div class="bot-msg-user">${titles[topic]}</div>`;
-            setTimeout(() => {
-                area.innerHTML += `<div class="bot-msg-ai">${BOT_ANSWERS[topic]}</div>`;
-                area.scrollTop = area.scrollHeight;
-            }, 200);
-        }
-
-        document.getElementById('botChatForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const input = document.getElementById('botUserInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const area = document.getElementById('botMessagesArea');
-            area.innerHTML += `<div class="bot-msg-user">${text}</div>`;
-            input.value = '';
-
-            const lower = text.toLowerCase();
-            let reply = 'Usa el selector superior <b>"Pantalla: ..."</b> para cambiar entre Supervisor, Ejecutivo, Counter Manager y Administrador General.';
-            if (lower.includes('ticket') || lower.includes('counter')) reply = BOT_ANSWERS.counter;
-            else if (lower.includes('factura') || lower.includes('sam') || lower.includes('costco') || lower.includes('walmart') || lower.includes('whatsapp')) reply = BOT_ANSWERS.ejecutivo;
-            else if (lower.includes('admin') || lower.includes('confirm')) reply = BOT_ANSWERS.admin;
-            else if (lower.includes('supervisor') || lower.includes('planea')) reply = BOT_ANSWERS.supervisor;
-
-            setTimeout(() => {
-                area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
-                area.scrollTop = area.scrollHeight;
-            }, 220);
-        });
     </script>
     <script type="module" src="app.js"></script>
 </body>
