@@ -35,6 +35,9 @@ const firebaseConfig = {
     measurementId: "G-GZDPT00J58"
 };
 
+// Pega aquí tu API Key gratuita de Google AI Studio (aistudio.google.com) para habilitar Gemini
+const GEMINI_API_KEY = "";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -873,7 +876,107 @@ window.exportExcelGeneral = () => {
 };
 
 // =========================================================
-// 9. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 4 PANTALLAS
+// 9. ASISTENTE CON INTELIGENCIA ARTIFICIAL (GEMINI + RESPALDO LOCAL)
+// =========================================================
+function getLocalFallbackAnswer(questionText) {
+    const lower = questionText.toLowerCase();
+    const pendingInvoices = eventsList.filter(e => getEventTickets(e).length > 0 && getEventInvoices(e).length === 0);
+    const pendingConfirm = eventsList.filter(e => !e.adminConfirmed);
+
+    if (lower.includes('pendiente') && lower.includes('factura')) {
+        if (pendingInvoices.length === 0) return 'No hay eventos con tickets pendientes de facturar en este momento.';
+        return `Hay <b>${pendingInvoices.length} evento(s)</b> con tickets listos para facturar: ` +
+            pendingInvoices.map(e => `<b>${e.id}</b> (${e.brand} - ${e.store})`).join(', ') + '.';
+    }
+    if (lower.includes('resumen')) {
+        return `Actualmente hay <b>${eventsList.length} evento(s)</b> registrados, <b>${pendingInvoices.length}</b> por facturar y <b>${pendingConfirm.length}</b> pendientes de confirmación por el Administrador General.`;
+    }
+    if (lower.includes('whatsapp')) {
+        return 'En la pantalla de <b>Ejecutivo</b>, presiona el botón verde <b>Enviar Planeación</b>. Si el Counter Manager tiene dos números registrados, el sistema te preguntará a cuál WhatsApp enviarlo.';
+    }
+    if (lower.includes('portal') || lower.includes('costco') || lower.includes('walmart') || lower.includes('sam')) {
+        return 'En la pantalla de <b>Ejecutivo</b> tienes acceso directo a los 7 portales: <b>Costco, Walmart, Sam\'s Club, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.';
+    }
+    return 'Puedo ayudarte con el estado de eventos, tickets pendientes, facturas o el uso de los perfiles (<b>Supervisor, Ejecutivo, Counter Manager y Admin General</b>). <i>(Tip: agrega tu API Key de Gemini en app.js para activar respuestas abiertas con IA).</i>';
+}
+
+async function askGeminiAssistant(userQuestion) {
+    if (!GEMINI_API_KEY) {
+        return getLocalFallbackAnswer(userQuestion);
+    }
+
+    const eventsSummary = eventsList.slice(0, 30).map(ev =>
+        `- ${ev.id} | Marca: ${ev.brand} | Tienda: ${ev.store} | Fechas: ${ev.dates} | Presupuesto: $${ev.price} | Counter Mgr: ${ev.contractorName} | Tickets: ${getEventTickets(ev).length} | Facturas: ${getEventInvoices(ev).length} | Confirmado Admin: ${ev.adminConfirmed ? 'Sí' : 'No'}`
+    ).join('\n');
+
+    const activeScreen = document.getElementById('screenSwitcher').value;
+    const systemPrompt = `Eres el Asistente Operativo con IA del portal de Estée Lauder Companies (ELC).
+Perfiles del sistema:
+1. Supervisor: programa eventos, precios y planeación con 2 WhatsApp del Counter Manager.
+2. Ejecutivo: envía planeación por WhatsApp, factura en 7 portales (Costco, Walmart, Sam's Club, La Comer, Soriana, Liverpool, Palacio de Hierro) y sube facturas.
+3. Counter Manager: revisa eventos asignados y sube múltiples tickets.
+4. Administrador General: audita todos los movimientos y confirma expedientes.
+
+Marcas: Estée Lauder, Clinique, La Mer, Fragancias, Kilian, Le Labo y Tom Ford.
+Pantalla activa actual: ${activeScreen}.
+
+Resumen de eventos actuales en Firestore:
+${eventsSummary || 'Aún no hay eventos registrados.'}
+
+Responde en español, de manera breve, clara, amable y usando formato HTML ligero (<b>, <br>) si mejora la lectura.`;
+
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [
+                        { role: "user", parts: [{ text: `${systemPrompt}\n\nPregunta del usuario: ${userQuestion}` }] }
+                    ]
+                })
+            }
+        );
+        const data = await response.json();
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text || getLocalFallbackAnswer(userQuestion);
+    } catch (error) {
+        console.warn("Error conectando con Gemini:", error);
+        return getLocalFallbackAnswer(userQuestion);
+    }
+}
+
+window.askBot = async (questionText) => {
+    const area = document.getElementById('botMessagesArea');
+    const sendBtn = document.getElementById('botSendBtn');
+
+    area.innerHTML += `<div class="bot-msg-user">${questionText}</div>`;
+    const typingId = 'typing-' + Date.now();
+    area.innerHTML += `<div id="${typingId}" class="bot-msg-ai text-slate-400 italic"><i class="fa-solid fa-sparkles fa-spin mr-1.5 text-blue-600"></i>Analizando...</div>`;
+    area.scrollTop = area.scrollHeight;
+
+    if (sendBtn) sendBtn.disabled = true;
+    const reply = await askGeminiAssistant(questionText);
+    if (sendBtn) sendBtn.disabled = false;
+
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+
+    area.innerHTML += `<div class="bot-msg-ai">${reply}</div>`;
+    area.scrollTop = area.scrollHeight;
+};
+
+document.getElementById('botChatForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('botUserInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    await window.askBot(text);
+});
+
+// =========================================================
+// 10. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 4 PANTALLAS
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
