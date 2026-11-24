@@ -214,7 +214,7 @@
         <main class="max-w-7xl mx-auto px-4 sm:px-8 -mt-12 space-y-6 relative z-20">
 
             <!-- ===============================================================
-                 PANTALLA 1: SUPERVISOR
+                 PANTALLA 1: SUPERVISOR (PROPINA, IVA, CALENDARIO, VALIDACIÓN Y PLANNING)
             ================================================================ -->
             <div id="viewSupervisor" class="hidden space-y-6 fade-in-screen">
                 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -228,39 +228,45 @@
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Tickets Subidos</span>
+                            <span class="text-xs font-semibold text-slate-500">Doble Validación</span>
+                            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-check-double"></i></span>
+                        </div>
+                        <h2 id="supKpiValidated" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Supervisor + Admin Gral.</p>
+                    </div>
+                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Tickets / Facturas</span>
                             <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
                         </div>
-                        <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
+                        <h2 id="supKpiTickets" class="text-2xl font-bold text-slate-900 mt-2">0 / 0</h2>
                         <p class="text-[11px] text-amber-600 font-medium mt-0.5">Comprobantes cargados</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Facturas Listas</span>
-                            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-                        </div>
-                        <h2 id="supKpiFacturados" class="text-2xl font-bold text-slate-900 mt-2">0</h2>
-                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Para descarga</p>
-                    </div>
-                    <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Presupuesto Planeado</span>
+                            <span class="text-xs font-semibold text-slate-500">Presupuesto Total</span>
                             <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-sack-dollar"></i></span>
                         </div>
                         <h2 id="supKpiBudget" class="text-2xl font-bold text-slate-900 mt-2">$0</h2>
-                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">MXN autorizado</p>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Incluye propina e IVA</p>
                     </div>
                 </section>
 
+                <!-- Formulario Programar Evento -->
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                         <div>
                             <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i>Programar Nuevo Evento & Planeación</h2>
-                            <p class="text-xs text-slate-400">Sube fechas, precios, detalles y los números de WhatsApp del Counter Manager</p>
+                            <p class="text-xs text-slate-400">Calcula propina e IVA, programa directo en calendario y envía planning a coordinadores</p>
                         </div>
-                        <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-file-excel"></i> Exportar Planeación
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="openCoordinatorsPlanningModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-envelope-open-text"></i> Planning Coordinadores
+                            </button>
+                            <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                            </button>
+                        </div>
                     </div>
 
                     <form id="supervisorEventForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -280,14 +286,20 @@
                             <label class="text-xs font-semibold text-slate-600">Tienda / Cadena</label>
                             <input type="text" id="supStore" required placeholder="Ej. Sam's / Costco / Walmart / Liverpool" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600">Fechas Programadas</label>
-                            <input type="text" id="supDates" required placeholder="Ej. 21 al 23 Nov 2026" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-600">Fecha Inicio</label>
+                                <input type="date" id="supDateStart" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-600">Fecha Fin</label>
+                                <input type="date" id="supDateEnd" required class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-slate-600">Precio / Presupuesto Autorizado (MXN)</label>
-                            <input type="number" step="0.01" id="supPrice" required placeholder="Ej. 14500" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="text-xs font-semibold text-slate-600">Importe Base (MXN)</label>
+                            <input type="number" step="0.01" id="supBasePrice" oninput="recalculateSupBudget()" required placeholder="Ej. 10000" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600">Counter Manager (Nombre)</label>
@@ -304,22 +316,48 @@
                             </div>
                         </div>
 
+                        <!-- CAMPOS DE PROPINA E IVA CON CÁLCULO EN VIVO -->
+                        <div class="md:col-span-3 p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex flex-wrap items-center gap-4 text-xs">
+                                <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+                                    <input type="checkbox" id="supIncludeTip" onchange="recalculateSupBudget()" class="w-4 h-4 rounded text-blue-600">
+                                    <span>Incluir Propina</span>
+                                    <input type="number" id="supTipPercent" value="10" min="1" max="50" oninput="recalculateSupBudget()" class="w-14 px-2 py-1 bg-white border border-slate-200 rounded-lg text-center text-xs font-bold">
+                                    <span class="text-slate-500">%</span>
+                                </label>
+
+                                <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+                                    <input type="checkbox" id="supIncludeIva" checked onchange="recalculateSupBudget()" class="w-4 h-4 rounded text-blue-600">
+                                    <span>Incluir IVA (16%)</span>
+                                </label>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-4 text-xs">
+                                <span class="text-slate-500">Base: <strong id="calcBase" class="text-slate-800">$0.00</strong></span>
+                                <span class="text-slate-500">Propina: <strong id="calcTip" class="text-amber-700">$0.00</strong></span>
+                                <span class="text-slate-500">IVA: <strong id="calcIva" class="text-indigo-700">$0.00</strong></span>
+                                <span class="px-3 py-1 rounded-xl bg-blue-600 text-white font-bold">Total: <span id="calcTotal">$0.00</span></span>
+                            </div>
+                        </div>
+
                         <div class="md:col-span-3">
-                            <label class="text-xs font-semibold text-slate-600">Detalles de Planeación / Conceptos y Precios Desglosados</label>
-                            <textarea id="supPlanDetails" rows="2" required placeholder="Indica horarios, actividades, materiales a comprar y desglose de precios..." class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            <label class="text-xs font-semibold text-slate-600">Detalles de Planeación / Conceptos</label>
+                            <textarea id="supPlanDetails" rows="2" required placeholder="Indica horarios, actividades, materiales a comprar y observaciones..." class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                         </div>
 
                         <div class="md:col-span-3 flex justify-end">
-                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition">
-                                <i class="fa-solid fa-paper-plane mr-1.5"></i>Guardar y Publicar Planeación
+                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                                <span>Guardar y Programar en Calendario</span>
                             </button>
                         </div>
                     </form>
                 </section>
 
+                <!-- Tabla de Seguimiento y Validación Supervisor -->
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                        <h3 class="text-base font-bold text-slate-900">Eventos Programados</h3>
+                        <h3 class="text-base font-bold text-slate-900">Eventos Programados & Validación Supervisor</h3>
                         <select id="supFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
                             <option value="Estée Lauder">Estée Lauder</option>
@@ -338,9 +376,8 @@
                                     <th class="py-3 px-3">Folio / Marca</th>
                                     <th class="py-3 px-3">Tienda y Fechas</th>
                                     <th class="py-3 px-3">Counter Manager</th>
-                                    <th class="py-3 px-3">Precio</th>
-                                    <th class="py-3 px-3">Tickets / Facturas</th>
-                                    <th class="py-3 px-3">Estado</th>
+                                    <th class="py-3 px-3">Desglose Total</th>
+                                    <th class="py-3 px-3">Doble Validación</th>
                                     <th class="py-3 px-3 text-right">Acciones</th>
                                 </tr>
                             </thead>
@@ -351,7 +388,7 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 2: EJECUTIVO
+                 PANTALLA 2: EJECUTIVO (7 PORTALES + WHATSAPP + MACHOTE CORREO + FACTURAS)
             ================================================================ -->
             <div id="viewEjecutivo" class="hidden space-y-6 fade-in-screen">
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
@@ -480,8 +517,8 @@
                 <section class="bg-white rounded-[28px] shadow-md border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
-                            <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp y Facturas</h3>
-                            <p class="text-xs text-slate-400">Envía la planeación por WhatsApp, visualiza/descarga tickets y sube facturas</p>
+                            <h3 class="text-base font-bold text-slate-900">Verificación de Planeación, WhatsApp, Correo y Facturas</h3>
+                            <p class="text-xs text-slate-400">Envía WhatsApp, genera el machote de correo, visualiza tickets y sube facturas</p>
                         </div>
                         <select id="ejFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -500,14 +537,14 @@
             </div>
 
             <!-- ===============================================================
-                 PANTALLA 3: COUNTER MANAGER
+                 PANTALLA 3: COUNTER MANAGER (CON CANDADO DE TIEMPO PARA TICKETS)
             ================================================================ -->
             <div id="viewCounter" class="hidden space-y-6 fade-in-screen">
                 <section class="bg-white rounded-[28px] shadow-lg border border-slate-100 p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-receipt text-blue-600 mr-2"></i>Counter Manager • Eventos Asignados & Tickets</h2>
-                            <p class="text-xs text-slate-400">Revisa la planeación, visualiza tus comprobantes y sube todos los tickets para facturación</p>
+                            <p class="text-xs text-slate-400">Regla operativa: los tickets deben subirse <b>el mismo día del evento o máximo 1 día después</b>.</p>
                         </div>
                         <select id="conFilterBrand" onchange="renderAllViews()" class="bg-slate-100 text-xs font-semibold px-3.5 py-2 rounded-xl outline-none">
                             <option value="ALL">Todas las marcas (7)</option>
@@ -538,7 +575,7 @@
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <span class="text-xs font-semibold text-slate-500">Pendientes Confirmar</span>
                         <h2 id="admKpiPending" class="text-2xl font-bold text-amber-600 mt-1">0</h2>
-                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Requieren visto bueno</p>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Requieren validación</p>
                     </div>
                     <div class="bg-white p-5 smooth-card shadow-lg border border-slate-100">
                         <span class="text-xs font-semibold text-slate-500">Confirmados</span>
@@ -556,9 +593,12 @@
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div>
                             <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-crown text-blue-600 mr-2"></i>Administrador General • Auditoría y Confirmación</h2>
-                            <p class="text-xs text-slate-400">Supervisa todos los movimientos, visualiza tickets y facturas, y confirma cada expediente</p>
+                            <p class="text-xs text-slate-400">Revisa validación de Supervisor, tickets, facturas y confirma cada expediente</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="openCoordinatorsPlanningModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-envelope-open-text"></i> Planning Coordinadores
+                            </button>
                             <button type="button" onclick="exportExcelGeneral()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
                                 <i class="fa-solid fa-file-excel"></i> Exportar Todo
                             </button>
@@ -717,6 +757,78 @@
     </div>
 
     <!-- =====================================================================
+         MODAL 6: MACHOTE DE CORREO Y PLANNING PARA COORDINADORES
+    ====================================================================== -->
+    <div id="emailTemplateModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[75] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[30px] max-w-2xl w-full overflow-hidden shadow-2xl modal-pop border border-slate-100">
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center text-base">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h3 id="emailModalTitle" class="text-base font-bold">Machote de Correo Electrónico</h3>
+                        <p id="emailModalSubtitle" class="text-[11px] text-blue-200">Listo para copiar o enviar a Coordinadores / Autorización</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEmailTemplateModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600">Correo Destinatario (Coordinador / Marca)</label>
+                        <input type="email" id="emailRecipientInput" placeholder="coordinacion@esteelauder.com" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600">Asunto del Correo</label>
+                        <input type="text" id="emailSubjectInput" class="w-full mt-1 p-2.5 bg-slate-100 rounded-xl text-xs font-semibold outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600">Cuerpo del Correo (Editable)</label>
+                    <textarea id="emailBodyTextarea" rows="10" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex flex-wrap justify-end gap-2.5">
+                    <button type="button" onclick="closeEmailTemplateModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100">Cerrar</button>
+                    <button type="button" onclick="copyEmailModalContent()" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Copiar Texto
+                    </button>
+                    <button type="button" onclick="openMailtoClient()" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> Abrir en Mi Correo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 7: AGENDAR EN CALENDARIO AL PROGRAMAR EVENTO
+    ====================================================================== -->
+    <div id="calendarPromptModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[75] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[28px] max-w-md w-full p-6 shadow-2xl modal-pop text-center">
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-3">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">¡Evento Programado!</h3>
+            <p id="calModalSummary" class="text-xs text-slate-500 mt-1 mb-5">Agrégalo directamente a tu calendario para recibir recordatorios.</p>
+            <div class="space-y-2.5">
+                <a id="btnGoogleCalendarLink" href="#" target="_blank" rel="noopener noreferrer" onclick="closeCalendarModal()" class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-google"></i> Agendar en Google Calendar
+                </a>
+                <button type="button" id="btnDownloadIcs" class="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-calendar-plus"></i> Descargar Archivo Calendario (.ics)
+                </button>
+                <button type="button" onclick="closeCalendarModal()" class="w-full py-2 text-xs font-semibold text-slate-400 hover:text-slate-600">Omitir por ahora</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
          BOT DE AYUDA CON IA FLOTANTE
     ====================================================================== -->
     <div class="fixed bottom-5 right-5 z-40">
@@ -756,7 +868,7 @@
 
             <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
                 <button type="button" onclick="askBot('¿Qué eventos tienen tickets pendientes de facturar?')" class="bot-chip">Pendientes de factura</button>
-                <button type="button" onclick="askBot('¿Cómo envío la planeación por WhatsApp?')" class="bot-chip">Enviar WhatsApp</button>
+                <button type="button" onclick="askBot('¿Cómo funciona el candado de tickets?')" class="bot-chip">Candado tickets</button>
                 <button type="button" onclick="askBot('¿Qué portales de facturación hay disponibles?')" class="bot-chip">Portales</button>
                 <button type="button" onclick="askBot('Dame un resumen general de los eventos activos')" class="bot-chip">Resumen IA</button>
             </div>
