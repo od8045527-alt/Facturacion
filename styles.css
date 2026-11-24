@@ -9,9 +9,6 @@ body {
     margin: 0;
 }
 
-/* =========================================================
-   CONTENEDOR PRINCIPAL DEL LOGIN DESLIZANTE
-========================================================= */
 .auth-wrapper {
     min-height: 100vh;
     display: flex;
@@ -136,9 +133,6 @@ body {
     color: #2563eb;
 }
 
-/* =========================================================
-   SELECTOR SEGMENTADO DINÁMICO (4 PERFILES)
-========================================================= */
 .role-segmented-wrapper {
     position: relative;
     z-index: 15;
@@ -227,7 +221,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Botones principales */
 .btn-auth {
     position: relative;
     overflow: hidden;
@@ -302,9 +295,6 @@ body {
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
-/* =========================================================
-   TARJETAS DE PORTALES DE FACTURACIÓN (7 TIENDAS)
-========================================================= */
 .portal-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -355,9 +345,6 @@ body {
     transform: scale(0.97);
 }
 
-/* =========================================================
-   DROPZONE DE CARGA DE ARCHIVOS MÚLTIPLES
-========================================================= */
 .dropzone-box {
     display: flex;
     flex-direction: column;
@@ -378,9 +365,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* =========================================================
-   NOTIFICACIONES TOAST & BOT DE AYUDA
-========================================================= */
 .toast-item {
     pointer-events: auto;
     background: #ffffff;
@@ -450,9 +434,6 @@ body {
     color: #ffffff;
 }
 
-/* =========================================================
-   PANEL CURVO DESLIZANTE
-========================================================= */
 .toggle-box {
     position: absolute;
     top: 0;
@@ -543,9 +524,6 @@ body {
     transform: scale(1.05);
 }
 
-/* =========================================================
-   ANIMACIONES DEL DASHBOARD Y TARJETAS
-========================================================= */
 .fade-in-screen {
     animation: screenFade 0.45s ease-out forwards;
 }
