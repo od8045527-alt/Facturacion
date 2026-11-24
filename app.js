@@ -46,7 +46,7 @@ const googleProvider = new GoogleAuthProvider();
 const ADMIN_GENERAL_CODE = 'ELC-ADMIN';
 
 // =========================================================
-// 0. REGISTRO DE SERVICE WORKER & NOTIFICACIONES NATIVAS (WINDOWS / MÓVIL)
+// 0. SERVICE WORKER & NOTIFICACIONES NATIVAS (WINDOWS / MÓVIL)
 // =========================================================
 let swRegistration = null;
 
@@ -458,18 +458,9 @@ function renderNotifications() {
     }).join('');
 }
 
-window.openNotifModal = () => {
-    document.getElementById('notifModal').classList.remove('hidden');
-};
-
-window.closeNotifModal = () => {
-    document.getElementById('notifModal').classList.add('hidden');
-};
-
-window.markSingleNotifRead = async (notifId) => {
-    await updateDoc(doc(db, "notificaciones_elc", notifId), { read: true });
-};
-
+window.openNotifModal = () => document.getElementById('notifModal').classList.remove('hidden');
+window.closeNotifModal = () => document.getElementById('notifModal').classList.add('hidden');
+window.markSingleNotifRead = async (notifId) => await updateDoc(doc(db, "notificaciones_elc", notifId), { read: true });
 window.markAllNotificationsRead = async () => {
     const unread = notificationsList.filter(n => !n.read);
     for (const item of unread) {
@@ -502,24 +493,58 @@ window.switchProfileScreen = (role) => {
 };
 
 // =========================================================
-// 6. PANTALLA SUPERVISOR: PROGRAMAR EVENTO Y 2 WHATSAPP
+// 6. CÁLCULO DE PROPINA + IVA, PROGRAMACIÓN Y CALENDARIO DIRECTO
 // =========================================================
+window.recalculateSupBudget = () => {
+    const base = Number(document.getElementById('supBasePrice').value) || 0;
+    const includeTip = document.getElementById('supIncludeTip').checked;
+    const tipPct = Number(document.getElementById('supTipPercent').value) || 10;
+    const includeIva = document.getElementById('supIncludeIva').checked;
+
+    const tipAmount = includeTip ? Number((base * (tipPct / 100)).toFixed(2)) : 0;
+    const ivaAmount = includeIva ? Number((base * 0.16).toFixed(2)) : 0;
+    const totalAmount = Number((base + tipAmount + ivaAmount).toFixed(2));
+
+    document.getElementById('calcBase').textContent = '$' + base.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    document.getElementById('calcTip').textContent = '$' + tipAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    document.getElementById('calcIva').textContent = '$' + ivaAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    document.getElementById('calcTotal').textContent = '$' + totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+
+    return { base, includeTip, tipPct, tipAmount, includeIva, ivaAmount, totalAmount };
+};
+
 document.getElementById('supervisorEventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const calc = window.recalculateSupBudget();
+    const startDateStr = document.getElementById('supDateStart').value;
+    const endDateStr = document.getElementById('supDateEnd').value || startDateStr;
+    const formattedDates = startDateStr === endDateStr ? startDateStr : `${startDateStr} al ${endDateStr}`;
+
     const newEv = {
         id: 'ELC-' + Math.floor(100 + Math.random() * 900),
         brand: document.getElementById('supBrand').value,
         store: document.getElementById('supStore').value.trim(),
-        dates: document.getElementById('supDates').value.trim(),
-        price: Number(document.getElementById('supPrice').value) || 0,
+        startDateISO: startDateStr,
+        endDateISO: endDateStr,
+        dates: formattedDates,
+        basePrice: calc.base,
+        includeTip: calc.includeTip,
+        tipPercent: calc.tipPct,
+        tipAmount: calc.tipAmount,
+        includeIva: calc.includeIva,
+        ivaAmount: calc.ivaAmount,
+        price: calc.totalAmount,
         contractorName: document.getElementById('supContractorName').value.trim(),
         contractorPhone: document.getElementById('supContractorPhone').value.replace(/\D/g, ''),
         contractorPhone2: document.getElementById('supContractorPhone2').value.replace(/\D/g, ''),
         planDetails: document.getElementById('supPlanDetails').value.trim(),
         supervisorName: currentUser.display,
-        whatsappSent: false,
+        supervisorConfirmed: false,
+        supervisorConfirmedBy: '',
         adminConfirmed: false,
         adminConfirmedBy: '',
+        ticketLockOverride: false,
+        whatsappSent: false,
         tickets: [],
         invoices: [],
         creadoEn: new Date().toISOString()
@@ -528,13 +553,147 @@ document.getElementById('supervisorEventForm').addEventListener('submit', async 
     await addDoc(collection(db, "eventos_elc"), newEv);
     await pushSystemNotification(
         `Nueva Planeación ${newEv.id}`,
-        `${newEv.brand} en ${newEv.store} (${newEv.dates}) asignado a ${newEv.contractorName}.`,
+        `${newEv.brand} en ${newEv.store} (${newEv.dates}) • Total: $${newEv.price.toLocaleString('es-MX')} MXN.`,
         'PLAN'
     );
 
     e.target.reset();
-    window.showToast('Planeación Publicada', `Evento ${newEv.id} creado y notificado al equipo.`, 'success');
+    document.getElementById('supIncludeIva').checked = true;
+    window.recalculateSupBudget();
+
+    openCalendarPrompt(newEv);
 });
+
+function openCalendarPrompt(ev) {
+    const startClean = (ev.startDateISO || new Date().toISOString().slice(0, 10)).replace(/-/g, '');
+    const endDateObj = new Date((ev.endDateISO || ev.startDateISO || new Date().toISOString().slice(0, 10)) + 'T12:00:00');
+    endDateObj.setDate(endDateObj.getDate() + 1);
+    const endClean = endDateObj.toISOString().slice(0, 10).replace(/-/g, '');
+
+    const title = `Evento ${ev.brand} - ${ev.store} (${ev.id})`;
+    const details = `Counter Manager: ${ev.contractorName} (${ev.contractorPhone})\nPresupuesto Total: $${Number(ev.price).toLocaleString('es-MX')} MXN\nPlaneación: ${ev.planDetails}`;
+
+    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startClean}/${endClean}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(ev.store)}`;
+    document.getElementById('btnGoogleCalendarLink').href = gcalUrl;
+    document.getElementById('calModalSummary').textContent = `${ev.brand} en ${ev.store} (${ev.dates}) • $${Number(ev.price).toLocaleString('es-MX')} MXN`;
+
+    document.getElementById('btnDownloadIcs').onclick = () => {
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Estee Lauder Companies//Portal Eventos//ES',
+            'BEGIN:VEVENT',
+            `UID:${ev.id}@elc-portal`,
+            `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+            `DTSTART;VALUE=DATE:${startClean}`,
+            `DTEND;VALUE=DATE:${endClean}`,
+            `SUMMARY:${title}`,
+            `LOCATION:${ev.store}`,
+            `DESCRIPTION:${details.replace(/\n/g, '\\n')}`,
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${ev.id}_${ev.brand.replace(/\s+/g, '_')}.ics`;
+        a.click();
+        URL.revokeObjectURL(url);
+        window.closeCalendarModal();
+    };
+
+    document.getElementById('calendarPromptModal').classList.remove('hidden');
+}
+
+window.closeCalendarModal = () => {
+    document.getElementById('calendarPromptModal').classList.add('hidden');
+};
+
+// =========================================================
+// 7. CANDADO DE TIEMPO PARA TICKETS (MISMO DÍA O MÁXIMO +1 DÍA)
+// =========================================================
+function getTicketLockStatus(ev) {
+    if (ev.ticketLockOverride) {
+        return { locked: false, label: 'Desbloqueado por supervisión', badgeClass: 'bg-blue-50 text-blue-700' };
+    }
+
+    const refDateStr = ev.endDateISO || ev.startDateISO;
+    if (!refDateStr) {
+        return { locked: false, label: 'Plazo activo', badgeClass: 'bg-emerald-50 text-emerald-700' };
+    }
+
+    const eventEnd = new Date(refDateStr + 'T23:59:59');
+    const deadline = new Date(eventEnd.getTime() + 24 * 60 * 60 * 1000);
+    const now = new Date();
+
+    if (now > deadline) {
+        return {
+            locked: true,
+            label: `Candado activo • Plazo vencido (límite: ${deadline.toLocaleDateString('es-MX')})`,
+            badgeClass: 'bg-red-50 text-red-700 border border-red-200'
+        };
+    }
+
+    return {
+        locked: false,
+        label: `Abierto hasta ${deadline.toLocaleDateString('es-MX')} (mismo día o +1 día)`,
+        badgeClass: 'bg-emerald-50 text-emerald-700'
+    };
+}
+
+window.toggleTicketLockOverride = async (docId, unlock) => {
+    await updateDoc(doc(db, "eventos_elc", docId), { ticketLockOverride: unlock });
+    window.showToast(
+        unlock ? 'Candado Desbloqueado' : 'Candado Activado',
+        unlock ? 'El Counter Manager ya puede subir tickets fuera de fecha.' : 'Se reactivó la restricción de mismo día / +1 día.',
+        'info'
+    );
+};
+
+// =========================================================
+// 8. DOBLE VALIDACIÓN (SUPERVISOR + ADMINISTRADOR GENERAL)
+// =========================================================
+window.toggleSupervisorValidation = async (docId, state) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+
+    await updateDoc(doc(db, "eventos_elc", docId), {
+        supervisorConfirmed: state,
+        supervisorConfirmedBy: state ? currentUser.display : ''
+    });
+
+    if (state) {
+        await pushSystemNotification(
+            `Validado por Supervisor (${ev.id})`,
+            `${currentUser.display} dio Vo.Bo. de Supervisor a ${ev.brand} - ${ev.store}.`,
+            'CONFIRM'
+        );
+        window.showToast('Vo.Bo. Supervisor Guardado', `Evento ${ev.id} validado por Supervisor.`, 'success');
+    }
+};
+
+window.toggleAdminConfirmation = async (docId, confirmState) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+
+    await updateDoc(doc(db, "eventos_elc", docId), {
+        adminConfirmed: confirmState,
+        adminConfirmedBy: confirmState ? currentUser.display : ''
+    });
+
+    if (confirmState) {
+        await pushSystemNotification(
+            `Confirmado Admin General (${ev.id})`,
+            `${currentUser.display} confirmó definitivamente ${ev.brand} - ${ev.store}.`,
+            'CONFIRM'
+        );
+        window.showToast('Confirmación Final Guardada', `Folio ${ev.id} confirmado por Administrador General.`, 'success');
+    } else {
+        window.showToast('Confirmación Revocada', `Folio ${ev.id} volvió a pendiente de revisión.`, 'warning');
+    }
+};
 
 window.deleteEvent = (docId, eventCode) => {
     window.openConfirmModal(
@@ -548,7 +707,109 @@ window.deleteEvent = (docId, eventCode) => {
 };
 
 // =========================================================
-// 7. ENVÍO WHATSAPP INTELIGENTE (PREGUNTA SI TIENE 2 NÚMEROS)
+// 9. MACHOTE DE CORREO ELECTRÓNICO & PLANNING COORDINADORES
+// =========================================================
+window.openSingleEventEmailModal = (docId) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (!ev) return;
+
+    const base = Number(ev.basePrice || ev.price || 0);
+    const tip = Number(ev.tipAmount || 0);
+    const iva = Number(ev.ivaAmount || 0);
+    const total = Number(ev.price || 0);
+
+    document.getElementById('emailModalTitle').textContent = `Machote de Correo • ${ev.id}`;
+    document.getElementById('emailModalSubtitle').textContent = `${ev.brand} • ${ev.store}`;
+    document.getElementById('emailSubjectInput').value = `Autorización / Facturación Evento ${ev.brand} - ${ev.store} (${ev.id})`;
+    document.getElementById('emailBodyTextarea').value =
+`Estimado equipo / Coordinación ${ev.brand},
+
+Por medio del presente comparto el detalle administrativo del evento realizado para su revisión y confirmación:
+
+• Folio: ${ev.id}
+• Marca: ${ev.brand}
+• Tienda / Cadena: ${ev.store}
+• Fechas: ${ev.dates}
+• Counter Manager asignado: ${ev.contractorName} (${ev.contractorPhone})
+
+DESGLOSE DE IMPORTES:
+• Importe Base: $${base.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+• Propina ${ev.includeTip ? `(${ev.tipPercent || 10}%)` : '(No incluida)'}: $${tip.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+• IVA ${ev.includeIva ? '(16%)' : '(No incluido)'}: $${iva.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+• TOTAL AUTORIZADO: $${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+
+ESTATUS DE VALIDACIÓN Y SOPORTE:
+• Validación Supervisor: ${ev.supervisorConfirmed ? 'CONFIRMADO (' + ev.supervisorConfirmedBy + ')' : 'Pendiente'}
+• Confirmación Admin General: ${ev.adminConfirmed ? 'CONFIRMADO (' + ev.adminConfirmedBy + ')' : 'Pendiente'}
+• Tickets cargados: ${getEventTickets(ev).length} archivo(s)
+• Facturas emitidas: ${getEventInvoices(ev).length} archivo(s)
+
+Detalles de Planeación:
+${ev.planDetails}
+
+Quedo atento a sus comentarios y confirmación.
+Saludos cordiales,
+${currentUser.display}`;
+
+    document.getElementById('emailTemplateModal').classList.remove('hidden');
+};
+
+window.openCoordinatorsPlanningModal = () => {
+    if (eventsList.length === 0) {
+        window.showToast('Sin eventos', 'Programa al menos un evento para generar el planning.', 'warning');
+        return;
+    }
+
+    const lines = eventsList.map((ev, idx) =>
+        `${idx + 1}. [${ev.id}] ${ev.brand} | ${ev.store} | Fechas: ${ev.dates} | Counter Mgr: ${ev.contractorName} | Total: $${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })} (Propina: $${Number(ev.tipAmount || 0).toFixed(2)}, IVA: $${Number(ev.ivaAmount || 0).toFixed(2)}) | Vo.Bo. Sup: ${ev.supervisorConfirmed ? 'OK' : 'Pendiente'} | Vo.Bo. Admin: ${ev.adminConfirmed ? 'OK' : 'Pendiente'}`
+    ).join('\n');
+
+    const totalGlobal = eventsList.reduce((acc, e) => acc + (Number(e.price) || 0), 0);
+
+    document.getElementById('emailModalTitle').textContent = 'Planning General para Coordinadores';
+    document.getElementById('emailModalSubtitle').textContent = 'Envía este resumen a los coordinadores para solicitar confirmación';
+    document.getElementById('emailSubjectInput').value = `Planning de Eventos Estée Lauder Companies - Solicitud de Confirmación (${new Date().toLocaleDateString('es-MX')})`;
+    document.getElementById('emailBodyTextarea').value =
+`Estimados Coordinadores,
+
+Les comparto el Planning actualizado de eventos programados para su amable revisión y confirmación de fechas, tiendas y presupuestos:
+
+${lines}
+
+------------------------------------------------------------
+TOTAL PRESUPUESTADO EN PLANNING: $${totalGlobal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+Total de eventos: ${eventsList.length}
+------------------------------------------------------------
+
+Por favor confírmennos de recibido o indíquennos si se requiere algún ajuste antes de la ejecución.
+
+Atentamente,
+${currentUser.display}
+Estée Lauder Companies`;
+
+    document.getElementById('emailTemplateModal').classList.remove('hidden');
+};
+
+window.closeEmailTemplateModal = () => {
+    document.getElementById('emailTemplateModal').classList.add('hidden');
+};
+
+window.copyEmailModalContent = () => {
+    const subject = document.getElementById('emailSubjectInput').value;
+    const body = document.getElementById('emailBodyTextarea').value;
+    navigator.clipboard.writeText(`Asunto: ${subject}\n\n${body}`);
+    window.showToast('Correo Copiado', 'Asunto y cuerpo copiados al portapapeles.', 'success');
+};
+
+window.openMailtoClient = () => {
+    const to = document.getElementById('emailRecipientInput').value.trim();
+    const subject = document.getElementById('emailSubjectInput').value;
+    const body = document.getElementById('emailBodyTextarea').value;
+    window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+// =========================================================
+// 10. ENVÍO WHATSAPP INTELIGENTE (2 NÚMEROS)
 // =========================================================
 window.prepareWhatsAppSend = (docId) => {
     const ev = eventsList.find(item => item.docId === docId);
@@ -581,9 +842,7 @@ window.prepareWhatsAppSend = (docId) => {
     }
 };
 
-window.closeWaSelectModal = () => {
-    document.getElementById('waSelectModal').classList.add('hidden');
-};
+window.closeWaSelectModal = () => document.getElementById('waSelectModal').classList.add('hidden');
 
 window.executeWhatsAppSend = async (docId, rawPhone) => {
     window.closeWaSelectModal();
@@ -600,15 +859,15 @@ window.executeWhatsAppSend = async (docId, rawPhone) => {
 🏷️ *Marca:* ${ev.brand}
 🏬 *Tienda:* ${ev.store}
 📅 *Fechas:* ${ev.dates}
-💰 *Presupuesto Autorizado:* $${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+💰 *Total Autorizado:* $${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN ${ev.includeTip ? '(Incluye propina)' : ''} ${ev.includeIva ? '(Incluye IVA)' : ''}
 
-📋 *Planeación y Precios:*
+📋 *Planeación:*
 ${ev.planDetails}
 
-Por favor ingresa al portal como *Counter Manager* para confirmar y subir todos tus *tickets* al finalizar para generar las facturas.`;
+⚠️ *Importante:* Recuerda subir tus *tickets* en el portal *el mismo día del evento o máximo 1 día después* para poder facturar.`;
 
     await updateDoc(doc(db, "eventos_elc", docId), { whatsappSent: true });
-    window.showToast('WhatsApp Listo', `Abriendo chat con ${ev.contractorName} (${cleanPhone || 'sin número'})...`, 'success');
+    window.showToast('WhatsApp Listo', `Abriendo chat con ${ev.contractorName}...`, 'success');
 
     const waUrl = phoneWithCountry
         ? `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(message)}`
@@ -617,25 +876,30 @@ Por favor ingresa al portal como *Counter Manager* para confirmar y subir todos 
 };
 
 // =========================================================
-// 8. CARGA, VISOR EN PANTALLA Y DESCARGA DE TICKETS / FACTURAS
+// 11. CARGA, VISOR EN PANTALLA Y DESCARGA DE TICKETS / FACTURAS
 // =========================================================
 function getEventTickets(ev) {
     if (Array.isArray(ev.tickets)) return ev.tickets;
-    if (ev.ticketRef) {
-        return [{ id: 'legacy-t', ref: ev.ticketRef, fileName: ev.ticketFileName, fileData: ev.ticketFileData }];
-    }
+    if (ev.ticketRef) return [{ id: 'legacy-t', ref: ev.ticketRef, fileName: ev.ticketFileName, fileData: ev.ticketFileData }];
     return [];
 }
 
 function getEventInvoices(ev) {
     if (Array.isArray(ev.invoices)) return ev.invoices;
-    if (ev.invoiceRef) {
-        return [{ id: 'legacy-i', ref: ev.invoiceRef, fileName: ev.invoiceFileName, fileData: ev.invoiceFileData }];
-    }
+    if (ev.invoiceRef) return [{ id: 'legacy-i', ref: ev.invoiceRef, fileName: ev.invoiceFileName, fileData: ev.invoiceFileData }];
     return [];
 }
 
 window.openUploadModal = (docId, type) => {
+    const ev = eventsList.find(item => item.docId === docId);
+    if (ev && type === 'TICKET') {
+        const lockInfo = getTicketLockStatus(ev);
+        if (lockInfo.locked) {
+            window.showToast('Candado Activo', 'El plazo para subir tickets (mismo día o +1 día) ya venció. Solicita desbloqueo al Supervisor o Admin General.', 'error');
+            return;
+        }
+    }
+
     uploadTarget = { docId, type };
     document.getElementById('uploadModalTitle').textContent =
         type === 'TICKET' ? 'Subir Tickets de Compra' : 'Subir Facturas Generadas';
@@ -659,13 +923,9 @@ window.closeUploadModal = () => {
 window.updateSelectedFilesPreview = (input) => {
     const count = input.files ? input.files.length : 0;
     const label = document.getElementById('selectedFilesCount');
-    if (count === 0) {
-        label.textContent = 'Ningún archivo seleccionado aún';
-    } else if (count === 1) {
-        label.textContent = `1 archivo listo: ${input.files[0].name}`;
-    } else {
-        label.textContent = `${count} archivos seleccionados listos para subir`;
-    }
+    if (count === 0) label.textContent = 'Ningún archivo seleccionado aún';
+    else if (count === 1) label.textContent = `1 archivo listo: ${input.files[0].name}`;
+    else label.textContent = `${count} archivos seleccionados listos para subir`;
 };
 
 function readFileAsBase64(file) {
@@ -739,7 +999,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         window.closeUploadModal();
     } catch (err) {
         console.error(err);
-        window.showToast('Error al subir', 'No se pudieron guardar los archivos. Intenta con archivos más ligeros.', 'error');
+        window.showToast('Error al subir', 'No se pudieron guardar los archivos.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-upload"></i><span>Agregar Archivos</span>';
@@ -793,10 +1053,7 @@ window.downloadArrayFile = (docId, type, itemId) => {
 
     const list = type === 'TICKET' ? getEventTickets(ev) : getEventInvoices(ev);
     const item = list.find(x => x.id === itemId);
-    if (!item || !item.fileData) {
-        window.showToast('Sin archivo', 'No se encontró el archivo adjunto.', 'warning');
-        return;
-    }
+    if (!item || !item.fileData) return;
 
     const link = document.createElement('a');
     link.href = item.fileData;
@@ -825,44 +1082,25 @@ window.removeArrayFile = (docId, type, itemId) => {
     );
 };
 
-window.toggleAdminConfirmation = async (docId, confirmState) => {
-    const ev = eventsList.find(item => item.docId === docId);
-    if (!ev) return;
-
-    await updateDoc(doc(db, "eventos_elc", docId), {
-        adminConfirmed: confirmState,
-        adminConfirmedBy: confirmState ? currentUser.display : ''
-    });
-
-    if (confirmState) {
-        await pushSystemNotification(
-            `Expediente Confirmado (${ev.id})`,
-            `${currentUser.display} (Admin General) validó y confirmó ${ev.brand} - ${ev.store}.`,
-            'CONFIRM'
-        );
-        window.showToast('Confirmación Guardada', `Folio ${ev.id} validado por Administrador General.`, 'success');
-    } else {
-        window.showToast('Confirmación Revocada', `Folio ${ev.id} volvió a pendiente de revisión.`, 'warning');
-    }
-};
-
 window.exportExcelGeneral = () => {
     if (eventsList.length === 0) {
         window.showToast('Tabla vacía', 'No hay eventos registrados para exportar.', 'warning');
         return;
     }
-    const headers = ['Folio', 'Marca', 'Tienda', 'Fechas', 'Precio_MXN', 'Counter_Manager', 'WhatsApp_1', 'WhatsApp_2', 'Tickets', 'Facturas', 'Confirmado_Admin_General'];
+    const headers = ['Folio', 'Marca', 'Tienda', 'Fechas', 'Base_MXN', 'Propina_MXN', 'IVA_MXN', 'Total_MXN', 'Counter_Manager', 'Tickets', 'Facturas', 'Val_Supervisor', 'Val_Admin_General'];
     const rows = eventsList.map(ev => [
         ev.id,
         ev.brand,
         `"${(ev.store || '').replace(/"/g, '""')}"`,
         `"${(ev.dates || '').replace(/"/g, '""')}"`,
+        Number(ev.basePrice || ev.price || 0).toFixed(2),
+        Number(ev.tipAmount || 0).toFixed(2),
+        Number(ev.ivaAmount || 0).toFixed(2),
         Number(ev.price || 0).toFixed(2),
         `"${(ev.contractorName || '').replace(/"/g, '""')}"`,
-        ev.contractorPhone || '',
-        ev.contractorPhone2 || '',
         getEventTickets(ev).length,
         getEventInvoices(ev).length,
+        ev.supervisorConfirmed ? 'SI' : 'PENDIENTE',
         ev.adminConfirmed ? 'SI' : 'PENDIENTE'
     ]);
     const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -876,28 +1114,28 @@ window.exportExcelGeneral = () => {
 };
 
 // =========================================================
-// 9. ASISTENTE CON INTELIGENCIA ARTIFICIAL (GEMINI + RESPALDO LOCAL)
+// 12. ASISTENTE CON INTELIGENCIA ARTIFICIAL (GEMINI + RESPALDO LOCAL)
 // =========================================================
 function getLocalFallbackAnswer(questionText) {
     const lower = questionText.toLowerCase();
     const pendingInvoices = eventsList.filter(e => getEventTickets(e).length > 0 && getEventInvoices(e).length === 0);
-    const pendingConfirm = eventsList.filter(e => !e.adminConfirmed);
+    const pendingConfirm = eventsList.filter(e => !e.adminConfirmed || !e.supervisorConfirmed);
 
     if (lower.includes('pendiente') && lower.includes('factura')) {
         if (pendingInvoices.length === 0) return 'No hay eventos con tickets pendientes de facturar en este momento.';
         return `Hay <b>${pendingInvoices.length} evento(s)</b> con tickets listos para facturar: ` +
             pendingInvoices.map(e => `<b>${e.id}</b> (${e.brand} - ${e.store})`).join(', ') + '.';
     }
-    if (lower.includes('resumen')) {
-        return `Actualmente hay <b>${eventsList.length} evento(s)</b> registrados, <b>${pendingInvoices.length}</b> por facturar y <b>${pendingConfirm.length}</b> pendientes de confirmación por el Administrador General.`;
+    if (lower.includes('candado')) {
+        return 'El <b>Candado de Tickets</b> permite al Counter Manager subir comprobantes únicamente <b>el mismo día del evento o máximo 1 día después</b>. Si el plazo vence, el Supervisor o Administrador General pueden desbloquearlo desde su panel.';
     }
-    if (lower.includes('whatsapp')) {
-        return 'En la pantalla de <b>Ejecutivo</b>, presiona el botón verde <b>Enviar Planeación</b>. Si el Counter Manager tiene dos números registrados, el sistema te preguntará a cuál WhatsApp enviarlo.';
+    if (lower.includes('resumen')) {
+        return `Actualmente hay <b>${eventsList.length} evento(s)</b> registrados, <b>${pendingInvoices.length}</b> por facturar y <b>${pendingConfirm.length}</b> pendientes de completar doble validación (Supervisor + Admin General).`;
     }
     if (lower.includes('portal') || lower.includes('costco') || lower.includes('walmart') || lower.includes('sam')) {
         return 'En la pantalla de <b>Ejecutivo</b> tienes acceso directo a los 7 portales: <b>Costco, Walmart, Sam\'s Club, La Comer, Soriana, Liverpool y Palacio de Hierro</b>.';
     }
-    return 'Puedo ayudarte con el estado de eventos, tickets pendientes, facturas o el uso de los perfiles (<b>Supervisor, Ejecutivo, Counter Manager y Admin General</b>). <i>(Tip: agrega tu API Key de Gemini en app.js para activar respuestas abiertas con IA).</i>';
+    return 'Puedo ayudarte con el estado de eventos, candado de tickets, cálculo de propina/IVA, machotes de correo o el uso de los 4 perfiles.';
 }
 
 async function askGeminiAssistant(userQuestion) {
@@ -906,24 +1144,16 @@ async function askGeminiAssistant(userQuestion) {
     }
 
     const eventsSummary = eventsList.slice(0, 30).map(ev =>
-        `- ${ev.id} | Marca: ${ev.brand} | Tienda: ${ev.store} | Fechas: ${ev.dates} | Presupuesto: $${ev.price} | Counter Mgr: ${ev.contractorName} | Tickets: ${getEventTickets(ev).length} | Facturas: ${getEventInvoices(ev).length} | Confirmado Admin: ${ev.adminConfirmed ? 'Sí' : 'No'}`
+        `- ${ev.id} | Marca: ${ev.brand} | Tienda: ${ev.store} | Fechas: ${ev.dates} | Total: $${ev.price} | Counter Mgr: ${ev.contractorName} | Tickets: ${getEventTickets(ev).length} | Facturas: ${getEventInvoices(ev).length} | Val. Sup: ${ev.supervisorConfirmed ? 'Sí' : 'No'} | Val. Admin: ${ev.adminConfirmed ? 'Sí' : 'No'}`
     ).join('\n');
 
     const activeScreen = document.getElementById('screenSwitcher').value;
     const systemPrompt = `Eres el Asistente Operativo con IA del portal de Estée Lauder Companies (ELC).
-Perfiles del sistema:
-1. Supervisor: programa eventos, precios y planeación con 2 WhatsApp del Counter Manager.
-2. Ejecutivo: envía planeación por WhatsApp, factura en 7 portales (Costco, Walmart, Sam's Club, La Comer, Soriana, Liverpool, Palacio de Hierro) y sube facturas.
-3. Counter Manager: revisa eventos asignados y sube múltiples tickets.
-4. Administrador General: audita todos los movimientos y confirma expedientes.
-
-Marcas: Estée Lauder, Clinique, La Mer, Fragancias, Kilian, Le Labo y Tom Ford.
-Pantalla activa actual: ${activeScreen}.
-
-Resumen de eventos actuales en Firestore:
-${eventsSummary || 'Aún no hay eventos registrados.'}
-
-Responde en español, de manera breve, clara, amable y usando formato HTML ligero (<b>, <br>) si mejora la lectura.`;
+Perfiles: Supervisor (programa eventos con propina/IVA, calendario y da Vo.Bo.), Ejecutivo (manda WhatsApp, usa machotes de correo, factura en 7 portales y sube facturas), Counter Manager (sube tickets con candado de mismo día o +1 día) y Administrador General (audita y da confirmación final).
+Pantalla activa: ${activeScreen}.
+Eventos actuales:
+${eventsSummary || 'Sin eventos aún.'}
+Responde en español, breve y claro.`;
 
     try {
         const response = await fetch(
@@ -932,16 +1162,13 @@ Responde en español, de manera breve, clara, amable y usando formato HTML liger
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [
-                        { role: "user", parts: [{ text: `${systemPrompt}\n\nPregunta del usuario: ${userQuestion}` }] }
-                    ]
+                    contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nPregunta: ${userQuestion}` }] }]
                 })
             }
         );
         const data = await response.json();
         return data?.candidates?.[0]?.content?.parts?.[0]?.text || getLocalFallbackAnswer(userQuestion);
     } catch (error) {
-        console.warn("Error conectando con Gemini:", error);
         return getLocalFallbackAnswer(userQuestion);
     }
 }
@@ -976,7 +1203,7 @@ document.getElementById('botChatForm').addEventListener('submit', async (e) => {
 });
 
 // =========================================================
-// 10. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 4 PANTALLAS
+// 13. SINCRONIZACIÓN FIRESTORE Y RENDER DE LAS 4 PANTALLAS
 // =========================================================
 function listenFirestoreEvents() {
     if (unsubscribeEvents) unsubscribeEvents();
@@ -1003,22 +1230,22 @@ function renderSupervisorView() {
 
     const totalTickets = list.reduce((acc, e) => acc + getEventTickets(e).length, 0);
     const totalInvoices = list.reduce((acc, e) => acc + getEventInvoices(e).length, 0);
+    const doubleValidated = list.filter(e => e.supervisorConfirmed && e.adminConfirmed).length;
     const totalBudget = list.reduce((acc, e) => acc + (Number(e.price) || 0), 0);
 
     document.getElementById('supKpiTotal').textContent = list.length;
-    document.getElementById('supKpiTickets').textContent = totalTickets;
-    document.getElementById('supKpiFacturados').textContent = totalInvoices;
+    document.getElementById('supKpiValidated').textContent = doubleValidated;
+    document.getElementById('supKpiTickets').textContent = `${totalTickets} / ${totalInvoices}`;
     document.getElementById('supKpiBudget').textContent = '$' + totalBudget.toLocaleString('es-MX');
 
     const tbody = document.getElementById('supEventsTable');
     if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">No hay eventos programados aún.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">No hay eventos programados aún.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = list.map(ev => {
-        const tickets = getEventTickets(ev);
-        const invoices = getEventInvoices(ev);
+        const lockInfo = getTicketLockStatus(ev);
 
         return `
             <tr class="hover:bg-slate-50 transition">
@@ -1034,26 +1261,33 @@ function renderSupervisorView() {
                     <span class="font-medium text-slate-700 block">${ev.contractorName}</span>
                     <span class="text-[10px] text-slate-400">WA1: ${ev.contractorPhone} ${ev.contractorPhone2 ? '• WA2: ' + ev.contractorPhone2 : ''}</span>
                 </td>
-                <td class="py-3.5 px-3 font-bold text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</td>
-                <td class="py-3.5 px-3 space-y-1">
-                    <div class="flex flex-wrap gap-1">
-                        ${tickets.length > 0
-                            ? tickets.map(t => `<button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="text-[10px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full"><i class="fa-solid fa-eye mr-1"></i>${t.ref}</button>`).join('')
-                            : `<span class="text-[10px] text-slate-400">Sin tickets</span>`}
-                    </div>
-                    <div class="flex flex-wrap gap-1">
-                        ${invoices.length > 0
-                            ? invoices.map(inv => `<button type="button" onclick="previewArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-eye mr-1"></i>${inv.ref}</button>`).join('')
-                            : `<span class="text-[10px] text-slate-400">Sin facturas</span>`}
-                    </div>
-                </td>
                 <td class="py-3.5 px-3">
-                    ${ev.adminConfirmed
-                        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full"><i class="fa-solid fa-check-double"></i>Confirmado</span>`
-                        : `<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full">En curso</span>`}
+                    <span class="font-bold text-slate-900 block">$${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                    <span class="text-[10px] text-slate-400">
+                        ${ev.includeTip ? `+Propina ${ev.tipPercent || 10}% ` : ''}
+                        ${ev.includeIva ? '+IVA 16%' : ''}
+                    </span>
                 </td>
-                <td class="py-3.5 px-3 text-right">
-                    <button type="button" onclick="deleteEvent('${ev.docId}', '${ev.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
+                <td class="py-3.5 px-3 space-y-1">
+                    <div>
+                        ${ev.supervisorConfirmed
+                            ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-check"></i>Sup. OK</span>`
+                            : `<button type="button" onclick="toggleSupervisorValidation('${ev.docId}', true)" class="text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-0.5 rounded-full transition">Validar Sup.</button>`}
+                    </div>
+                    <div>
+                        ${ev.adminConfirmed
+                            ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown"></i>Admin OK</span>`
+                            : `<span class="text-[10px] text-slate-400">Admin pendiente</span>`}
+                    </div>
+                </td>
+                <td class="py-3.5 px-3 text-right whitespace-nowrap space-x-1">
+                    <button type="button" onclick="openSingleEventEmailModal('${ev.docId}')" title="Machote Correo" class="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white inline-flex items-center justify-center transition">
+                        <i class="fa-solid fa-envelope text-xs"></i>
+                    </button>
+                    ${lockInfo.locked
+                        ? `<button type="button" onclick="toggleTicketLockOverride('${ev.docId}', true)" title="Desbloquear candado de tickets" class="w-8 h-8 rounded-xl bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white inline-flex items-center justify-center transition"><i class="fa-solid fa-lock-open text-xs"></i></button>`
+                        : ''}
+                    <button type="button" onclick="deleteEvent('${ev.docId}', '${ev.id}')" title="Eliminar" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-500 text-red-500 hover:text-white inline-flex items-center justify-center transition">
                         <i class="fa-solid fa-trash-can text-xs"></i>
                     </button>
                 </td>
@@ -1078,19 +1312,23 @@ function renderEjecutivoView() {
 
         return `
             <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
-                <div class="flex justify-between items-start">
+                <div class="flex justify-between items-start gap-2">
                     <div>
                         <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${ev.id} • ${ev.brand}</span>
                         <h4 class="text-base font-bold text-slate-900 mt-1">${ev.store}</h4>
-                        <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates} • Presupuesto: <strong class="text-slate-900">$${Number(ev.price).toLocaleString('es-MX')}</strong></p>
+                        <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i>${ev.dates} • Total: <strong class="text-slate-900">$${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong></p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">
+                            ${ev.includeTip ? `Propina (${ev.tipPercent || 10}%): $${Number(ev.tipAmount || 0).toFixed(2)} • ` : ''}
+                            ${ev.includeIva ? `IVA (16%): $${Number(ev.ivaAmount || 0).toFixed(2)}` : 'Sin IVA'}
+                        </p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
-                        ${ev.whatsappSent
-                            ? `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full"><i class="fa-brands fa-whatsapp mr-1"></i>Enviado</span>`
-                            : `<span class="text-[10px] font-semibold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">Pendiente WA</span>`}
-                        ${ev.adminConfirmed
-                            ? `<span class="text-[10px] font-bold bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full"><i class="fa-solid fa-crown mr-1"></i>Validado Admin</span>`
-                            : ''}
+                        <span class="text-[10px] font-bold ${ev.supervisorConfirmed ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded-full">
+                            ${ev.supervisorConfirmed ? '✓ Sup. OK' : 'Sup. Pend.'}
+                        </span>
+                        <span class="text-[10px] font-bold ${ev.adminConfirmed ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded-full">
+                            ${ev.adminConfirmed ? '✓ Admin OK' : 'Admin Pend.'}
+                        </span>
                     </div>
                 </div>
 
@@ -1099,16 +1337,22 @@ function renderEjecutivoView() {
                     ${ev.planDetails}
                 </div>
 
-                <div class="flex items-center justify-between text-xs bg-white px-3.5 py-2.5 rounded-2xl border border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs bg-white px-3.5 py-2.5 rounded-2xl border border-slate-100">
                     <div>
                         <span class="text-slate-400 block text-[10px]">Counter Manager</span>
                         <span class="font-bold text-slate-800">${ev.contractorName}</span>
                         <span class="text-[10px] text-slate-400 block">${ev.contractorPhone} ${ev.contractorPhone2 ? '• +1 alterno' : ''}</span>
                     </div>
-                    <button type="button" onclick="prepareWhatsAppSend('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
-                        <i class="fa-brands fa-whatsapp text-sm"></i>
-                        <span>Enviar Planeación</span>
-                    </button>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="openSingleEventEmailModal('${ev.docId}')" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-semibold text-xs flex items-center gap-1.5 transition" title="Machote de correo">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                            <span>Correo</span>
+                        </button>
+                        <button type="button" onclick="prepareWhatsAppSend('${ev.docId}')" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                            <span>WhatsApp</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -1120,12 +1364,8 @@ function renderEjecutivoView() {
                                     <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/70 text-[11px]">
                                         <span class="font-semibold text-amber-900 truncate pr-1" title="${t.fileName}">${t.ref}</span>
                                         <div class="flex items-center gap-1 shrink-0">
-                                            <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[10px]" title="Visualizar">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </button>
-                                            <button type="button" onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px]" title="Descargar">
-                                                <i class="fa-solid fa-download"></i>
-                                            </button>
+                                            <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[10px]"><i class="fa-solid fa-eye"></i></button>
+                                            <button type="button" onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px]"><i class="fa-solid fa-download"></i></button>
                                         </div>
                                     </div>
                                 `).join('')
@@ -1136,9 +1376,7 @@ function renderEjecutivoView() {
                     <div class="p-3 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-bold text-blue-900"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Facturas (${invoices.length})</span>
-                            <button type="button" onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition">
-                                + Subir
-                            </button>
+                            <button type="button" onclick="openUploadModal('${ev.docId}', 'FACTURA')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition">+ Subir</button>
                         </div>
                         <div class="space-y-1.5 max-h-32 overflow-y-auto">
                             ${invoices.length > 0
@@ -1146,15 +1384,9 @@ function renderEjecutivoView() {
                                     <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-blue-200/70 text-[11px]">
                                         <span class="font-semibold text-blue-900 truncate pr-1" title="${inv.fileName}">${inv.ref}</span>
                                         <div class="flex items-center gap-1 shrink-0">
-                                            <button type="button" onclick="previewArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[10px]" title="Visualizar">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </button>
-                                            <button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px]" title="Descargar">
-                                                <i class="fa-solid fa-download"></i>
-                                            </button>
-                                            <button type="button" onclick="removeArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-1.5 py-0.5 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white text-[10px]" title="Quitar">
-                                                <i class="fa-solid fa-xmark"></i>
-                                            </button>
+                                            <button type="button" onclick="previewArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[10px]"><i class="fa-solid fa-eye"></i></button>
+                                            <button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px]"><i class="fa-solid fa-download"></i></button>
+                                            <button type="button" onclick="removeArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-1.5 py-0.5 rounded-lg bg-red-50 hover:bg-red-500 text-red-500 hover:text-white text-[10px]"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
                                     </div>
                                 `).join('')
@@ -1179,6 +1411,7 @@ function renderCounterView() {
 
     grid.innerHTML = list.map(ev => {
         const tickets = getEventTickets(ev);
+        const lockInfo = getTicketLockStatus(ev);
 
         return `
             <div class="border border-slate-200 rounded-3xl p-5 bg-slate-50/50 hover:bg-white hover:shadow-md transition space-y-3">
@@ -1194,10 +1427,16 @@ function renderCounterView() {
                     </div>
                 </div>
 
+                <!-- INDICADOR DE CANDADO DE TIEMPO -->
+                <div class="px-3 py-2 rounded-xl text-[11px] font-semibold flex items-center gap-2 ${lockInfo.badgeClass}">
+                    <i class="fa-solid ${lockInfo.locked ? 'fa-lock' : 'fa-clock'}"></i>
+                    <span>${lockInfo.label}</span>
+                </div>
+
                 <div class="bg-white p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
                     <div class="flex justify-between">
                         <span class="font-bold text-slate-800">Indicaciones del Evento:</span>
-                        <span class="font-bold text-blue-700">Monto: $${Number(ev.price).toLocaleString('es-MX')}</span>
+                        <span class="font-bold text-blue-700">Total: $${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                     </div>
                     <p>${ev.planDetails}</p>
                 </div>
@@ -1205,10 +1444,9 @@ function renderCounterView() {
                 <div class="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-receipt text-blue-600 mr-1.5"></i>Tickets Cargados (${tickets.length})</span>
-                        <button type="button" onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold shadow-sm transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>Agregar Tickets</span>
-                        </button>
+                        ${lockInfo.locked
+                            ? `<span class="px-3 py-1.5 rounded-xl bg-red-100 text-red-700 text-[11px] font-bold flex items-center gap-1.5"><i class="fa-solid fa-lock"></i> Plazo Cerrado</span>`
+                            : `<button type="button" onclick="openUploadModal('${ev.docId}', 'TICKET')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-plus"></i><span>Agregar Tickets</span></button>`}
                     </div>
 
                     ${tickets.length > 0
@@ -1220,12 +1458,8 @@ function renderCounterView() {
                                         <span class="text-[10px] text-emerald-700 block truncate">${t.fileName}</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0">
-                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition" title="Ver ticket">
-                                            <i class="fa-solid fa-eye text-[11px]"></i>
-                                        </button>
-                                        <button type="button" onclick="removeArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-white hover:bg-red-500 text-red-500 hover:text-white border border-emerald-200 flex items-center justify-center transition" title="Eliminar ticket">
-                                            <i class="fa-solid fa-trash-can text-[11px]"></i>
-                                        </button>
+                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition"><i class="fa-solid fa-eye text-[11px]"></i></button>
+                                        ${!lockInfo.locked ? `<button type="button" onclick="removeArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="w-7 h-7 rounded-lg bg-white hover:bg-red-500 text-red-500 hover:text-white border border-emerald-200 flex items-center justify-center transition"><i class="fa-solid fa-trash-can text-[11px]"></i></button>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
@@ -1256,6 +1490,7 @@ function renderAdminGeneralView() {
     grid.innerHTML = list.map(ev => {
         const tickets = getEventTickets(ev);
         const invoices = getEventInvoices(ev);
+        const lockInfo = getTicketLockStatus(ev);
 
         return `
             <div class="border ${ev.adminConfirmed ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-white'} rounded-3xl p-5 shadow-sm hover:shadow-md transition space-y-3">
@@ -1269,8 +1504,11 @@ function renderAdminGeneralView() {
                         <p class="text-xs text-slate-500">${ev.dates} • Counter Mgr: <b>${ev.contractorName}</b></p>
                     </div>
                     <div class="text-right">
-                        <span class="text-sm font-extrabold text-slate-900 block">$${Number(ev.price).toLocaleString('es-MX')}</span>
-                        <span class="text-[10px] text-slate-400">Sup: ${ev.supervisorName || 'ELC'}</span>
+                        <span class="text-sm font-extrabold text-slate-900 block">$${Number(ev.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        <span class="text-[10px] text-slate-400 block">
+                            ${ev.includeTip ? `Propina: $${Number(ev.tipAmount || 0).toFixed(2)} ` : ''}
+                            ${ev.includeIva ? `IVA: $${Number(ev.ivaAmount || 0).toFixed(2)}` : ''}
+                        </span>
                     </div>
                 </div>
 
@@ -1280,14 +1518,19 @@ function renderAdminGeneralView() {
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="p-3 rounded-2xl bg-amber-50/60 border border-amber-100 space-y-1.5">
-                        <span class="text-[11px] font-bold text-amber-900 block"><i class="fa-solid fa-receipt mr-1"></i>Tickets (${tickets.length})</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-amber-900"><i class="fa-solid fa-receipt mr-1"></i>Tickets (${tickets.length})</span>
+                            ${lockInfo.locked
+                                ? `<button type="button" onclick="toggleTicketLockOverride('${ev.docId}', true)" class="text-[10px] font-bold text-red-600 hover:underline"><i class="fa-solid fa-lock-open mr-0.5"></i>Desbloquear</button>`
+                                : ''}
+                        </div>
                         ${tickets.length > 0
                             ? tickets.map(t => `
                                 <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/70 text-[11px]">
                                     <span class="font-semibold text-slate-800 truncate pr-1">${t.ref}</span>
                                     <div class="flex gap-1 shrink-0">
-                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-slate-900 text-white text-[10px]" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
-                                        <button type="button" onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 text-white text-[10px]" title="Descargar"><i class="fa-solid fa-download"></i></button>
+                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-slate-900 text-white text-[10px]"><i class="fa-solid fa-eye"></i></button>
+                                        <button type="button" onclick="downloadArrayFile('${ev.docId}', 'TICKET', '${t.id}')" class="px-2 py-0.5 rounded-lg bg-amber-600 text-white text-[10px]"><i class="fa-solid fa-download"></i></button>
                                     </div>
                                 </div>
                             `).join('')
@@ -1301,8 +1544,8 @@ function renderAdminGeneralView() {
                                 <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-blue-200/70 text-[11px]">
                                     <span class="font-semibold text-slate-800 truncate pr-1">${inv.ref}</span>
                                     <div class="flex gap-1 shrink-0">
-                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-slate-900 text-white text-[10px]" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
-                                        <button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 text-white text-[10px]" title="Descargar"><i class="fa-solid fa-download"></i></button>
+                                        <button type="button" onclick="previewArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-slate-900 text-white text-[10px]"><i class="fa-solid fa-eye"></i></button>
+                                        <button type="button" onclick="downloadArrayFile('${ev.docId}', 'FACTURA', '${inv.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 text-white text-[10px]"><i class="fa-solid fa-download"></i></button>
                                     </div>
                                 </div>
                             `).join('')
@@ -1310,14 +1553,27 @@ function renderAdminGeneralView() {
                     </div>
                 </div>
 
+                <!-- DOBLE VALIDACIÓN (SUPERVISOR + ADMINISTRADOR GENERAL) -->
                 <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    ${ev.adminConfirmed
-                        ? `<span class="text-xs font-bold text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>Confirmado por ${ev.adminConfirmedBy || 'Admin General'}</span>
-                           <button type="button" onclick="toggleAdminConfirmation('${ev.docId}', false)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold transition">Quitar Confirmación</button>`
-                        : `<span class="text-[11px] text-amber-700 font-medium"><i class="fa-solid fa-clock mr-1"></i>Pendiente de validación</span>
-                           <button type="button" onclick="toggleAdminConfirmation('${ev.docId}', true)" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
-                               <i class="fa-solid fa-check-double"></i> Confirmar Todo
-                           </button>`}
+                    <div class="text-[11px]">
+                        <span class="block ${ev.supervisorConfirmed ? 'text-emerald-700 font-semibold' : 'text-slate-400'}">
+                            <i class="fa-solid ${ev.supervisorConfirmed ? 'fa-circle-check' : 'fa-clock'} mr-1"></i>
+                            Supervisor: ${ev.supervisorConfirmed ? ev.supervisorConfirmedBy : 'Pendiente Vo.Bo.'}
+                        </span>
+                        <span class="block ${ev.adminConfirmed ? 'text-indigo-700 font-bold' : 'text-amber-700'}">
+                            <i class="fa-solid ${ev.adminConfirmed ? 'fa-crown' : 'fa-hourglass-half'} mr-1"></i>
+                            Admin Gral: ${ev.adminConfirmed ? ev.adminConfirmedBy : 'Pendiente Confirmar'}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="openSingleEventEmailModal('${ev.docId}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition" title="Ver machote de correo">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                        ${ev.adminConfirmed
+                            ? `<button type="button" onclick="toggleAdminConfirmation('${ev.docId}', false)" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold transition">Quitar Vo.Bo.</button>`
+                            : `<button type="button" onclick="toggleAdminConfirmation('${ev.docId}', true)" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5"><i class="fa-solid fa-check-double"></i> Confirmar Todo</button>`}
+                    </div>
                 </div>
             </div>
         `;
